@@ -39,7 +39,7 @@
             </thead>
             <tbody>
                 {% for item in students %}
-                <tr>
+                <tr class="border-bottom">
                     <td class="ps-4"><code class="fw-bold font-monospace text-secondary">{{ item.admission_number }}</code></td>
                     <td>
                         <span class="fw-semibold text-slate-900 d-block" style="color: #0f172a;">{{ item.first_name }} {{ item.last_name }}</span>
@@ -56,7 +56,10 @@
                         <div class="d-flex justify-content-center gap-2">
                             <a href="{% url 'student_statement' item.id %}" class="btn btn-outline-secondary btn-sm rounded-3 px-3 d-inline-flex align-items-center gap-1 fw-medium"><i class="bi bi-file-earmark-text"></i> Audit Ledger</a>
                             {% if item.current_balance > 0 %}
-                                <a href="{% url 'collect_fee' item.id %}" class="btn btn-primary btn-sm rounded-3 px-3 d-inline-flex align-items-center gap-1 fw-medium"><i class="bi bi-plus-circle"></i> Collect Fee</a>
+                                <!-- FIXED: Changed student.id to item.id to sync with the loop variable -->
+                                <a href="{% url 'collect_fee_payment' item.id %}" class="btn btn-sm btn-success rounded-pill d-inline-flex align-items-center">
+                                    <i class="bi bi-cash-coin me-1"></i> Collect Fees
+                                </a>
                             {% else %}
                                 <button class="btn btn-outline-success btn-sm rounded-3 px-3 d-inline-flex align-items-center gap-1 fw-medium" disabled><i class="bi bi-patch-check"></i> Paid In Full</button>
                             {% endif %}

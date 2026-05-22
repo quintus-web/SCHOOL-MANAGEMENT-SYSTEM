@@ -4,152 +4,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kabiero Academy - Student Portal Profile Dashboard</title>
+    <title>Parent Portal Workspace - Kabiero Academy</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FDFAF4; color: #1C2B1E; min-height: 100vh; }
-        .navbar-custom { background-color: #1B4332; border-bottom: 3px solid #C49A3C; }
-        .card-custom { border: none; border-radius: 16px; background-color: #ffffff; box-shadow: 0 4px 20px rgba(27,67,50,0.04); border: 1px solid #EAE0CC; margin-bottom: 1.5rem; }
-        .badge-finance { background-color: rgba(232,115,74,0.1); color: #E8734A; font-weight: 600; }
-        .badge-academic { background-color: rgba(64,145,108,0.1); color: #40916C; font-weight: 600; }
-        .table-custom thead th { background-color: #F5EFE0; color: #1B4332; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
-        @media print { .no-print { display: none !important; } }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+        .portal-header { background-color: #1B4332; border-bottom: 4px solid #C49A3C; color: white; padding: 1.5rem 0; shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card-custom { border: none; border-radius: 12px; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+        @media print { .no-print { display: none !important; } body { background-color: white; } }
     </style>
 </head>
 <body>
 
-<!-- Header Navbar Banner -->
-<nav class="navbar navbar-dark navbar-custom py-3 no-print">
-    <div class="container">
-        <span class="navbar-brand fw-bold d-flex align-items-center gap-2">
-            <i class="bi bi-person-workspace text-warning fs-3"></i>
-            <span>KABIERO ACADEMY <small class="text-white text-opacity-50 fw-light">| Official Parent Portal</small></span>
-        </span>
-        <a href="{% url 'public_home' %}" class="btn btn-outline-light btn-sm rounded-pill px-4 fw-medium">
-            <i class="bi bi-box-arrow-left me-1"></i> Exit Portal
-        </a>
-    </div>
-</nav>
-
-<div class="container my-5">
-    <!-- Row 1: Student Core Identity File Summary Header -->
-    <div class="card-custom p-4 mb-4" style="background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%); color: white; border: none;">
-        <div class="row align-items-center g-3">
-            <div class="col-md-8 d-flex align-items-center gap-3">
-                <div class="bg-white bg-opacity-10 rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
-                    <i class="bi bi-mortarboard-fill text-warning fs-1"></i>
-                </div>
+    <!-- Parent Secure Identity Header -->
+    <header class="portal-header mb-4 no-print">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-shield-lock-fill text-warning fs-2"></i>
                 <div>
-                    <h3 class="fw-bold mb-1">{{ student.first_name }} {{ student.last_name }}</h3>
-                    <p class="mb-0 text-white text-opacity-75 small">
-                        Class Stream Room Allocation: <span class="badge bg-white bg-opacity-20 text-white fw-bold px-2 py-1 ms-1">{{ student.class_stream.name }}</span>
-                    </p>
+                    <h4 class="fw-bold mb-0">Kabiero Academy Parent Gateway</h4>
+                    <small class="text-white-50">Secured Digital Link for: <strong>{{ student.first_name }} {{ student.last_name }}</strong> (Adm: {{ student.admission_number }})</small>
                 </div>
             </div>
-            <div class="col-md-4 text-md-end">
-                <span class="text-white text-opacity-50 small d-block">System Verification Key ID</span>
-                <code class="text-warning fw-bold font-monospace fs-5">{{ student.admission_number }}</code>
-            </div>
+            <a href="{% url 'public_home' %}" class="btn btn-outline-light btn-sm rounded-pill px-3"><i class="bi bi-box-arrow-right me-1"></i>Exit Secure Session</a>
         </div>
-    </div>
+    </header>
 
-    <div class="row">
-        <!-- Column Left: Financial Ledger Card Module -->
-        <div class="col-lg-6">
-            <div class="card-custom p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-wallet2 text-success me-2"></i>Fee Ledger Statement</h5>
-                    <span class="badge badge-finance px-3 py-2 rounded-pill">KES Total Tracking</span>
+    <main class="container">
+        
+        <!-- Live Quick Balances Panel Grid -->
+        <div class="row g-3 mb-4 no-print">
+            <div class="col-md-4">
+                <div class="card p-3 border-0 rounded-3 text-white {% if balance > 0 %}bg-danger{% else %}bg-success{% endif %}">
+                    <small class="text-uppercase fw-bold text-white-50 small" style="font-size:0.7rem;">Fee Ledger Balance Status</small>
+                    <h2 class="fw-bold font-monospace mb-0">KES {{ balance|floatformat:2 }}</h2>
+                    <small class="text-white-50">{% if balance > 0 %}Please clear promptly via Paybill{% else %}Account fully paid in full. Thank you!{% endif %}</small>
                 </div>
-
-                <!-- Highlight Large Outstanding Arrears Metrics Row -->
-                <div class="p-3 rounded-4 mb-4 text-center" style="background-color: #FDFAF4; border: 1px dashed #C49A3C;">
-                    <span class="text-muted small uppercase fw-bold d-block mb-1" style="font-size: 0.72rem; letter-spacing: 0.05em;">Current Outstanding Balance Arrears</span>
-                    {% if balance > 0 %}
-                        <h2 class="fw-bold text-danger mb-0">KES {{ balance|floatformat:2 }}</h2>
-                    {% else %}
-                        <h2 class="fw-bold text-success mb-0"><i class="bi bi-patch-check-fill me-1"></i> Account Cleared</h2>
-                    {% endif %}
+            </div>
+            <div class="col-md-4">
+                <div class="card p-3 border-0 bg-dark text-white rounded-3">
+                    <small class="text-uppercase fw-bold text-white-50 small" style="font-size:0.7rem;">Allocated Class Stream</small>
+                    <h2 class="fw-bold mb-0">{{ student.class_stream.name|default:"General Stream" }}</h2>
+                    <small class="text-white-50">Room: {{ student.class_stream.room_number|default:"10A" }}</small>
                 </div>
-
-                <h6 class="fw-bold text-secondary mb-3 small text-uppercase">Financial Transactions History Log</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle">
-                        <thead>
-                            <tr>
-                                <th>Date Ref</th>
-                                <th>Description</th>
-                                <th class="text-end">Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for inv in invoices %}
-                            <tr>
-                                <td class="text-muted small">{{ inv.created_at|date:"d M Y" }}</td>
-                                <td><span class="small fw-semibold">Invoice: Term Fee Requirement</span></td>
-                                <td class="text-end text-danger fw-bold small">+{{ inv.amount|floatformat:2 }}</td>
-                            </tr>
-                            {% endfor %}
-                            {% for rec in receipts %}
-                            <tr>
-                                <td class="text-muted small">{{ rec.created_at|date:"d M Y" }}</td>
-                                <td><span class="small fw-semibold text-success">Payment: Code <code>{{ rec.reference_code }}</code></span></td>
-                                <td class="text-end text-success fw-bold small">-{{ rec.amount_paid|floatformat:2 }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-3 border-0 bg-primary text-white rounded-3">
+                    <small class="text-uppercase fw-bold text-white-50 small" style="font-size:0.7rem;">Medical/Health Profile Notes</small>
+                    <h3 class="fw-bold mb-0">Blood Group: {{ student.blood_group|default:"O+" }}</h3>
+                    <small class="text-white-50 truncate">Allergies: {{ student.known_allergies }}</small>
                 </div>
             </div>
         </div>
 
-        <!-- Column Right: Academic Performance Record Transcript Module -->
-        <div class="col-lg-6">
-            <div class="card-custom p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Academic Report Card Grid</h5>
-                    <span class="badge badge-academic px-3 py-2 rounded-pill">Year 2026 Records</span>
+        <div class="row g-4">
+            <!-- Left Layout Dashboard Panel (7 Columns Wide) -->
+            <div class="col-lg-7">
+                
+                <!-- SECTION A: Termly Grading Reports & Analytics Grid Card -->
+                <div class="card card-custom p-4">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-graph-up-arrow text-success me-2"></i>Academic Grading & Exam Records</h5>
+                        <button onclick="window.print()" class="btn btn-sm btn-outline-dark no-print"><i class="bi bi-printer me-1"></i>Download Report Card</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0" style="font-size:0.88rem;">
+                            <thead>
+                                <tr class="table-light text-secondary font-weight-bold">
+                                    <th>Subject Course</th>
+                                    <th class="text-center">CAT 1</th>
+                                    <th class="text-center">CAT 2</th>
+                                    <th class="text-center">Main Exam</th>
+                                    <th class="text-end">Aggregate Marks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in exam_records %}
+                                <tr class="border-bottom">
+                                    <td class="fw-bold text-dark">{{ record.subject.name }}</td>
+                                    <td class="text-center font-monospace">{{ record.cat_1|default:"--" }}</td>
+                                    <td class="text-center font-monospace">{{ record.cat_2|default:"--" }}</td>
+                                    <td class="text-center font-monospace">{{ record.final_exam|default:"--" }}</td>
+                                    <td class="text-end fw-bold text-primary font-monospace">{{ record.total_marks }}%</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center text-muted py-3">No evaluation markers logged for this terminal season yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Subject Code Name</th>
-                                <th class="text-center">CAT 1</th>
-                                <th class="text-center">CAT 2</th>
-                                <th class="text-center">Final Exam</th>
-                                <th class="text-end">Aggregate Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for rec in exam_records %}
-                            <tr>
-                                <td>
-                                    <span class="fw-bold text-dark d-block" style="font-size: 0.9rem;">{{ rec.subject.name }}</span>
-                                    <code class="text-muted font-monospace small" style="font-size: 0.72rem;">{{ rec.subject.code }}</code>
-                                </td>
-                                <td class="text-center small">{{ rec.cat_1|default:"--" }}</td>
-                                <td class="text-center small">{{ rec.cat_2|default:"--" }}</td>
-                                <td class="text-center small">{{ rec.final_exam|default:"--" }}</td>
-                                <td class="text-end fw-bold text-primary">{{ rec.total_marks|default:"--" }}%</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center text-muted py-4 small">
-                                    <i class="bi bi-exclamation-triangle d-block mb-2 fs-4"></i> No active term exam records posted for this profile yet.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <!-- SECTION B: Active Assignments Notice Blocks -->
+                <div class="card card-custom p-4 no-print">
+                    <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-journal-text text-warning me-2"></i>Homework & Assignment Tasks Tracker</h5>
+                    {% for task in homework_list %}
+                    <div class="border-start border-warning border-3 ps-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="fw-bold mb-0 text-dark">{{ task.title }} (<span class="text-primary">{{ task.subject.name }}</span>)</h6>
+                            <span class="badge bg-light text-danger border font-monospace">Due: {{ task.submission_deadline|date:"d M Y" }}</span>
+                        </div>
+                        <p class="text-secondary small mt-1 mb-0">{{ task.task_instructions }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted small text-center mb-0 py-2">No outstanding homework records assigned onto your stream dashboard panel.</p>
+                    {% endfor %}
                 </div>
+
+            </div>
+
+            <!-- Right Layout Dashboard Panel (5 Columns Wide) -->
+            <div class="col-lg-5 no-print">
+                
+                <!-- SECTION C: Institutional Bulletin Board Announcements -->
+                <div class="card card-custom p-4 bg-white">
+                    <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-megaphone text-danger me-2"></i>School Notice Board Announcements</h5>
+                    {% for notice in announcements %}
+                    <div class="bg-light p-3 rounded-3 mb-2 border-0">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <strong class="text-dark small d-block">{{ notice.title }}</strong>
+                            <span class="text-muted font-monospace" style="font-size:0.7rem;">{{ notice.date_published|date:"d M" }}</span>
+                        </div>
+                        <p class="text-secondary small mb-0" style="font-size:0.8rem;">{{ notice.announcement_body }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted small text-center mb-0">Bulletin board reads clean. No public notices deployed today.</p>
+                    {% endfor %}
+                </div>
+
+                <!-- SECTION D: Campus Attendance Tracking logs Feed -->
+                <div class="card card-custom p-4">
+                    <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-fingerprint text-primary me-2"></i>Biometric Attendance Check-In Feed</h5>
+                    <div style="max-height: 220px; overflow-y: auto;">
+                        {% for log in attendance_logs %}
+                        <div class="d-flex justify-content-between align-items-center small py-1.5 border-bottom">
+                            <span class="text-dark font-monospace"><i class="bi bi-calendar-check me-2 text-success"></i>{{ log.date|date:"l, d M Y" }}</span>
+                            {% if log.status == 'PRESENT' %}
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.75rem;">Verified Present</span>
+                            {% else %}
+                                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-0.5 fw-bold" style="font-size: 0.75rem;">Absent Alert</span>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <p class="text-muted small text-center mb-0">No attendance timestamps tracked on file indices room.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
             </div>
         </div>
-    </div>
-</div>
+    </main>
+
+    <footer class="text-center text-muted small py-4 mt-5 border-top no-print bg-white">
+        &copy; 2026 Kabiero Academy Secure Portal Gateway · All Rights Reserved
+    </footer>
 
 </body>
 </html>

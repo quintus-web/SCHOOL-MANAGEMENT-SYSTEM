@@ -502,7 +502,9 @@
     </a>
 </li>
         <li><hr></li>
-        <li><a href="{% url 'parent_gateway' %}" style="font-weight: 600;"><i class="bi bi-shield-check text-warning"></i> Parent Access Portal</a></li>
+        <li><a href="{% url 'parent_portal_gateway' %}" class="btn btn-warning rounded-pill">
+       <i class="bi bi-shield-lock me-1"></i> Parent Portal
+   </a></li>
       </ul>
     </div>
 
@@ -519,7 +521,7 @@
     <hr style="border:0; height:1px; background:var(--sand); margin: 0.5rem 0;">
     <a href="{% url 'bursar_dashboard' %}" onclick="closeMenu()"><i class="bi bi-bank"></i> Accounts Desk</a>
     <a href="{% url 'marks_entry_portal' %}" onclick="closeMenu()"><i class="bi bi-pencil-square"></i> Teacher Matrix</a>
-    <a href="{% url 'parent_gateway' %}" onclick="closeMenu()" style="color: var(--gold); font-weight: 600;"><i class="bi bi-shield-check"></i> Parent Access</a>
+    <a href="{% url 'parent_portal_gateway' %}" onclick="closeMenu()" style="color: var(--gold); font-weight: 600;"><i class="bi bi-shield-check"></i> Parent Access</a>
   </div>
 </nav>
 
