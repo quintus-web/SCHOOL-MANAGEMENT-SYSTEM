@@ -757,3 +757,110 @@ def fee_defaulters_sms_portal(request):
         return redirect('bursar_dashboard')
         
     return render(request, 'finance/sms_portal.html', {'defaulters': defaulters_queue})
+
+
+    import os
+import csv
+import datetime
+from django.shortcuts import render, redirect
+from django.conf import settings
+
+# A helper class that formats the CSV rows so your HTML templates can read them
+class LiveCSVStudent:
+    def __init__(self, row):
+        self.admission_number = row[0].strip()
+        
+        # Safe ID mapping so your view statement links don't crash
+        try:
+            self.id = int(self.admission_number)
+        except ValueError:
+            self.id = 999
+
+        # Splits full name into first and last name for the initials circles
+        full_name = row[1].strip()
+        name_parts = full_name.split(" ", 1)
+        self.first_name = name_parts[0]
+        self.last_name = name_parts[1] if len(name_parts) > 1 else ""
+        
+        self.gender = row[2].strip()
+        self.current_grade = row[5].strip() if (len(row) > 5 and row[5].strip()) else "Grade 1"
+        
+        # Tricks the template into reading student.class_stream.name smoothly
+        class StreamWrapper:
+            def __init__(self, grade_str):
+                self.name = grade_str
+        self.class_stream = StreamWrapper(self.current_grade)
+        
+        # Parent information defaults for the demo
+        self.guardian_name = row[8].strip() if (len(row) > 8 and row[8].strip()) else "Not Provided"
+        self.parent_phone = row[9].strip() if (len(row) > 9 and row[9].strip()) else "Contact Office"
+        self.guardian_relation = "Primary Contact"
+        
+        self.blood_group = "Unset"
+        self.current_balance = 0.00
+
+
+def _load_students_from_csv():
+    """Helper function to load the CSV file safely regardless of directory depth"""
+    csv_path = os.path.join(settings.BASE_DIR, '..', 'Crescent Heights School - STUDENTS.csv')
+    if not os.path.exists(csv_path):
+        csv_path = os.path.join(settings.BASE_DIR, 'Crescent Heights School - STUDENTS.csv')
+        
+    students_list = []
+    if os.path.exists(csv_path):
+        with open(csv_path, mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            next(reader)  # Skip header row
+            for row in reader:
+                if len(row) >= 2 and row[1].strip():
+                    students_list.append(LiveCSVStudent(row))
+    return students_list
+
+
+# ── FUNCTION A: FOR YOUR MASTER STUDENT REGISTRY TABLE ──
+def student_registry_workstation(request):
+    students = _load_students_from_csv()
+    students.sort(key=lambda s: s.first_name)
+    context = {'students': students}
+    return render(request, 'finance/student_registry_workstation.html', context)
+
+
+# ── FUNCTION B: FOR YOUR ATTENDANCE DESK DROPDOWN GRID ──
+def mark_daily_attendance_registry(request):
+    students_pool = _load_students_from_csv()
+    
+    # Clean primary school levels matching Crescent Heights exactly
+    grade_order = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
+    
+    class MockDropdownStream:
+        def __init__(self, name_string):
+            self.id = name_string
+            self.name = name_string
+            
+    streams = [MockDropdownStream(g) for g in grade_order]
+    
+    selected_stream = request.GET.get('stream_id', '').strip()
+    target_date_str = request.GET.get('date', '').strip()
+    
+    if not target_date_str:
+        target_date = datetime.date.today().strftime('%Y-%m-%d')
+    else:
+        target_date = target_date_str
+        
+    # Filter down to the selected grade live
+    students = [s for s in students_pool if s.current_grade == selected_stream]
+    students.sort(key=lambda s: s.first_name)
+    
+    existing_records = {s.id: "PRESENT" for s in students}
+        
+    if request.method == 'POST':
+        return redirect(f"{request.path}?stream_id={selected_stream}&date={target_date}")
+        
+    context = {
+        'streams': streams,
+        'selected_stream': selected_stream,
+        'target_date': target_date,
+        'students': students,
+        'existing_records': existing_records,
+    }
+    return render(request, 'finance/attendance_registry.html', context)
