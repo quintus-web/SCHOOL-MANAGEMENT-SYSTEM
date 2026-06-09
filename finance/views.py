@@ -1,5 +1,4 @@
 # finance/views.py
-from django.views.decorators.csrf import csrf_exempt
 import os
 import csv
 import datetime
@@ -10,7 +9,7 @@ from django.http import JsonResponse, Http404, HttpResponse
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
-
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
@@ -41,7 +40,7 @@ class LiveCSVStudent:
         self.first_name = parts[0]
         self.last_name = parts[1] if len(parts) > 1 else ""
         self.gender = row[2].strip() if len(row) > 2 else ""
-        self.current_grade = row[5].strip() if len(row) > 5 else "Grade 1"
+        self.current_grade = row[5].strip() if len(row) > 5 else "Playground"
 
         class Stream:
             def __init__(self, name):
@@ -105,7 +104,6 @@ def student_registry_workstation(request):
         "students": students,
         "selected_stream": selected_stream
     })
-
 
 
 @login_required
@@ -251,11 +249,12 @@ def teacher_sms_broadcast(request):
 @login_required
 @csrf_exempt
 def daily_attendance_deck(request):
-    streams = sorted(list(set(
-        Student.objects.filter(class_stream__isnull=False)
-        .values_list('class_stream__name', flat=True)
-    )))
+    # Authentic Kenyan CBC Grade Sort Sequence Order List
+    ordered_grades = ["Playground", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
     
+    db_streams = set(Student.objects.filter(class_stream__isnull=False).values_list('class_stream__name', flat=True))
+    streams = [g for g in ordered_grades if g in db_streams] or ordered_grades
+
     selected_stream = request.GET.get("stream_id", streams[0] if streams else "")
     current_date = timezone.now().date()
     
@@ -382,7 +381,15 @@ def staff_login_view(request):
         )
         if user:
             login(request, user)
-            request.session["role"] = role
+            
+            # Bypass sidebar visibility restrictions for presentation account
+            if user.is_superuser:
+                request.session["active_role_context"] = "Headteacher"
+                request.session["role"] = "Headteacher"
+            else:
+                request.session["active_role_context"] = role
+                request.session["role"] = role
+                
             return redirect("public_home")
         
         messages.error(request, "Operational authorization denied: Invalid terminal signatures.")
@@ -409,6 +416,7 @@ def developer_debug_console_hub(request):
 @login_required
 @csrf_exempt
 def add_new_student_onboarding(request):
+    """Processes frontend modal forms and registers new CBC learners cleanly."""
     if request.method == "POST":
         adm_no = request.POST.get("admission_number")
         first_name = request.POST.get("first_name")
@@ -454,3 +462,44 @@ public_school_website = bursar_dashboard
 staff_directory_matrix = bursar_dashboard
 academic_analytics_dashboard = bursar_dashboard
 fee_defaulters_sms_portal = fee_defaulters_portal
+
+# Add these views to your finance/views.py file
+
+@login_required
+def edit_student_info(request, student_id):
+    """Loads a student record and processes updates from an edit form."""
+    student = get_object_or_404(Student, id=student_id)
+    
+    if request.method == "POST":
+        student.first_name = request.POST.get("first_name").strip()
+        student.last_name = request.POST.get("last_name").strip()
+        student.gender = 'F' if request.POST.get("gender", "M").upper() in ['F', 'GIRL', 'FEMALE'] else 'M'
+        student.guardian_name = request.POST.get("guardian_name", "").strip()
+        student.parent_phone = request.POST.get("parent_phone", "").strip()
+        
+        class_stream_name = request.POST.get("class_stream")
+        if class_stream_name:
+            stream_instance, _ = ClassStream.objects.get_or_create(name=class_stream_name.strip())
+            student.class_stream = stream_instance
+            
+        student.save()
+        messages.success(request, f"Profile parameters for {student.first_name} updated successfully.")
+        return redirect('student_registry')
+        
+    return render(request, "finance/edit_student.html", {"student": student})
+
+
+@login_required
+def delete_student_record(request, student_id):
+    """Safely removes a learner entry from active directory matrix tracks."""
+    student = get_object_or_404(Student, id=student_id)
+    
+    if request.method == "POST":
+        first_name = student.first_name
+        last_name = student.last_name
+        student.delete()
+        messages.warning(request, f"Learner record {first_name} {last_name} has been permanently purged from the database.")
+        return redirect('student_registry')
+        
+    # Fallback to confirmation prompt if anyone hits via GET
+    return render(request, "finance/confirm_delete.html", {"student": student})

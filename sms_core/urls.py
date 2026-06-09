@@ -44,4 +44,18 @@ urlpatterns = [
     path('attendance/commit-bulk-attendance/', views.commit_bulk_attendance, name='commit_bulk_attendance'),
     
     path('logistics/inventory/', views.inventory_asset_control_deck, name='inventory_deck'),
+
+    # ── STUDENT OPERATIONAL DIRECTORY ──
+    path('registry/learners/', views.student_registry_workstation, name='student_registry'),
+    path('registry/learners/<int:student_id>/folder/', views.single_student_profile_folder, name='student_profile'),
+    
+    # 🎯 FIXED: Maps the modal onboarding form submission directly to the view function!
+    path('add-new-student-onboarding/', views.add_new_student_onboarding, name='add_new_student_onboarding'),
+    
+    path('registry/staff-matrix/', views.staff_management_matrix, name='staff_management_matrix'),
+    path('registry/faculty/', views.faculty_directory, name='faculty_directory'),
+
+    # Place these inside your urlpatterns list alongside other student routes
+    path('registry/learners/<int:student_id>/edit/', views.edit_student_info, name='edit_student'),
+    path('registry/learners/<int:student_id>/delete/', views.delete_student_record, name='delete_student'),
 ]

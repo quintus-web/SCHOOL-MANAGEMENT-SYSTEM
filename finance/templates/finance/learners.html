@@ -1,4 +1,3 @@
-<!-- finance/templates/finance/learners.html -->
 {% extends 'finance/base.html' %}
 
 {% block title %}Learner Registry Matrix - Kabiero Academy{% endblock %}
@@ -6,82 +5,96 @@
 {% block content %}
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
-        <h3 class="fw-bold text-dark mb-1">Learner Registry Matrix</h3>
-        <p class="text-muted small text-uppercase fw-semibold mb-0">Official Student Enrollment and Demographic Directory</p>
+        <h3 class="fw-bold text-dark mb-1" style="letter-spacing: -0.02em;">Learner Registry Matrix</h3>
+        <p class="text-muted small text-uppercase fw-semibold mb-0" style="letter-spacing: 0.05em; font-size: 0.72rem;">Official Student Enrollment and Demographic Directory</p>
     </div>
     
-    <!-- Quick Add Toggle Button Trigger -->
-    <button type="button" class="btn btn-primary px-4 fw-semibold rounded-3 shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#enrollmentModal">
+    <button type="button" class="btn btn-primary px-4 fw-bold rounded-3 shadow-sm d-inline-flex align-items-center gap-2" style="border-radius: 12px; height: 46px;" data-bs-toggle="modal" data-bs-target="#enrollmentModal">
         <i class="bi bi-person-plus-fill fs-5"></i> Enroll New Student
     </button>
 </div>
 
-<!-- Main Statistics Mini Widgets Grid -->
 <div class="row mb-4">
     <div class="col-md-4">
-        <div class="card card-custom p-3 border-start border-3 border-primary shadow-sm bg-white">
-            <span class="text-muted small text-uppercase fw-bold">Total Registered Learners</span>
-            <h3 class="fw-bold text-dark mt-1 mb-0">{{ students|length }}</h3>
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: 14px; border-left: 4px solid #2563eb !important;">
+            <span class="text-muted small text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.05em;">Total Registered Learners</span>
+            <h3 class="fw-bold text-dark mt-1 mb-0" style="letter-spacing: -0.02em;">{{ students|length }}</h3>
         </div>
     </div>
 </div>
 
-<!-- Table Directory Container Layout -->
-<div class="card card-custom shadow-sm border-0">
+<div class="card border-0 shadow-sm bg-white" style="border-radius: 16px; overflow: hidden;">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+            <thead class="table-light text-secondary small uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.02em;">
                 <tr>
-                    <th class="ps-4">Admission No.</th>
-                    <th>Full Name</th>
-                    <th>Gender</th>
-                    <th>Stream Assignment</th>
-                    <th>Guardian Details</th>
-                    <th class="text-center">System Folder</th>
+                    <th class="ps-4 py-3" style="width: 15%;">Admission No.</th>
+                    <th style="width: 25%;">Full Name</th>
+                    <th style="width: 10%;">Gender</th>
+                    <th style="width: 15%;">Stream Assignment</th>
+                    <th style="width: 20%;">Guardian Details</th>
+                    <th class="text-center" style="width: 15%;">Action Control Desk</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody style="font-size: 0.88rem;">
                 {% for student in students %}
-                <tr class="border-bottom">
-                    <td class="ps-4"><code class="fw-bold text-primary font-monospace">{{ student.admission_number }}</code></td>
+                <tr class="border-bottom" style="transition: background-color 0.15s ease;">
+                    <td class="ps-4">
+                        <code class="fw-bold text-primary font-monospace px-2 py-1 rounded bg-primary-subtle" style="font-size: 0.8rem;">{{ student.admission_number }}</code>
+                    </td>
                     <td>
                         <div class="d-flex align-items-center gap-3">
-                            <div class="avatar-placeholder bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center fw-bold text-uppercase" style="width: 38px; height: 38px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+                            <div class="avatar-placeholder text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold text-uppercase" style="width: 38px; height: 38px; font-size: 0.82rem; background-color: #eff6ff; border: 1px solid #dbeafe;">
                                 {{ student.first_name|slice:":1" }}{% if student.last_name %}{{ student.last_name|slice:":1" }}{% endif %}
                             </div>
                             <div>
-                                <span class="fw-semibold text-dark d-block">{{ student.first_name }} {{ student.last_name }}</span>
-                                <span class="text-muted font-monospace" style="font-size: 0.75rem;">ID: #{{ student.id }}</span>
+                                <span class="fw-bold text-dark d-block" style="color: #0f172a;">{{ student.first_name }} {{ student.last_name }}</span>
+                                <span class="text-muted font-monospace d-block" style="font-size: 0.72rem;">DB REF: #{{ student.id }}</span>
                             </div>
                         </div>
                     </td>
                     <td>
-                        {% if student.gender == 'M' %}
-                            <span class="badge bg-blue-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-3">Boy</span>
+                        {% if student.gender == 'M' or student.gender == 'Male' %}
+                            <span class="badge px-2.5 py-1 rounded-pill fw-semibold" style="background-color: #eff6ff; color: #2563eb; font-size: 0.75rem;">Boy</span>
                         {% else %}
-                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 rounded-3">Girl</span>
+                            <span class="badge px-2.5 py-1 rounded-pill fw-semibold" style="background-color: #fdf2f8; color: #db2777; font-size: 0.75rem;">Girl</span>
                         {% endif %}
                     </td>
                     <td>
-                        <span class="badge bg-light text-dark border px-2.5 py-1 rounded-3 fw-medium">
-                            {{ student.class_stream.name|default:"Unassigned Stream Block" }}
+                        <span class="badge bg-light text-dark border px-2.5 py-1 rounded-3 fw-semibold" style="font-size: 0.78rem;">
+                            {{ student.class_stream.name|default:"Unassigned Block" }}
                         </span>
                     </td>
                     <td>
-                        <span class="d-block small fw-medium text-dark">{{ student.guardian_name }}</span>
-                        <span class="text-muted font-monospace d-block" style="font-size: 0.78rem;"><i class="bi bi-telephone me-1"></i>{{ student.parent_phone }}</span>
+                        <span class="d-block small fw-bold text-dark">{{ student.guardian_name }}</span>
+                        <span class="text-muted font-monospace d-block" style="font-size: 0.78rem;">
+                            <i class="bi bi-telephone-fill me-1 text-secondary" style="font-size: 0.7rem;"></i>{{ student.parent_phone }}
+                        </span>
                     </td>
-                    <td class="text-center">
-                        <a href="{% url 'student_profile' student.id %}" class="btn btn-sm btn-outline-dark rounded-3 px-3">
-                            <i class="bi bi-folder2-open me-1"></i> View Folder
-                        </a>
+                    <td class="text-center pe-3">
+                        <div class="btn-group btn-group-sm rounded-3 shadow-sm" role="group" style="overflow: hidden;">
+                            <a href="{% url 'student_profile' student.id %}" class="btn btn-white border border-end-0 text-dark fw-semibold px-2.5 py-2" title="View Folder">
+                                <i class="bi bi-folder2-open text-primary me-1"></i> View
+                            </a>
+                            
+                            <a href="{% url 'edit_student' student.id %}" class="btn btn-white border border-end-0 text-dark fw-semibold px-2.5 py-2" title="Modify Student">
+                                <i class="bi bi-pencil-square text-warning me-1"></i> Edit
+                            </a>
+                            
+                            <form method="POST" action="{% url 'delete_student' student.id %}" class="d-inline mb-0" onsubmit="return confirm('⚠️ WARNING: Permanent Purge Operation. Are you completely sure you want to delete {{ student.first_name }} {{ student.last_name }} from the on-premises database framework?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-white border text-dark fw-semibold px-2.5 py-2 rounded-0" title="Purge Record">
+                                    <i class="bi bi-trash3-fill text-danger me-1"></i> Delete
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
                     <td colspan="6" class="text-center py-5 text-muted">
                         <div class="py-4">
-                            <i class="bi bi-people text-muted mb-3 d-block" style="font-size: 3rem;"></i>
+                            <i class="bi bi-people-fill text-muted mb-3 d-block" style="font-size: 3rem; color: #cbd5e1 !important;"></i>
                             <h5 class="fw-bold text-dark mb-1">Registry Workspace Empty</h5>
                             <p class="text-muted small mx-auto mb-0" style="max-width: 400px;">
                                 No student records have been initialized into the relational engine tables yet. Run your database seed script or click the enroll button above.
@@ -95,54 +108,66 @@
     </div>
 </div>
 
-<!-- Integrated Enrollment Bootstrap Modal Interface Overlay -->
 <div class="modal fade" id="enrollmentModal" tabindex="-1" aria-labelledby="enrollmentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow-lg">
-            <div class="modal-header bg-dark text-white p-4 rounded-top-4">
-                <h5 class="modal-title fw-bold" id="enrollmentModalLabel"><i class="bi bi-person-plus me-2 text-primary"></i>Initialize New Learner Entry</h5>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header bg-dark text-white p-4" style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="enrollmentModalLabel">
+                    <i class="bi bi-person-plus-fill text-primary"></i> Initialize New Learner Entry
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST" action="/add-new-student-onboarding/">
+            <form method="POST" action="{% url 'add_new_student_onboarding' %}">
                 {% csrf_token %}
-                <div class="modal-body p-4">
+                <div class="modal-body p-4 bg-light">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Admission Number</label>
-                            <input type="text" name="admission_number" class="form-control" placeholder="e.g., CA/2026/084" required autocomplete="off">
+                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Admission Number</label>
+                            <input type="text" name="admission_number" class="form-control px-3 fw-semibold font-monospace" placeholder="e.g., CA/2026/001" required autocomplete="off" style="border-radius: 8px; height: 42px;">
                         </div>
                         <div class="col-6">
-                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1">First Name</label>
-                            <input type="text" name="first_name" class="form-control" placeholder="e.g., Quintus" required autocomplete="off">
+                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">First Name</label>
+                            <input type="text" name="first_name" class="form-control px-3" placeholder="First Name" required autocomplete="off" style="border-radius: 8px; height: 42px;">
                         </div>
                         <div class="col-6">
-                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Last Name</label>
-                            <input type="text" name="last_name" class="form-control" placeholder="e.g., Ondicho" required autocomplete="off">
+                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Last Name</label>
+                            <input type="text" name="last_name" class="form-control px-3" placeholder="Last Name" required autocomplete="off" style="border-radius: 8px; height: 42px;">
                         </div>
                         <div class="col-6">
-                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Gender</label>
-                            <select name="gender" class="form-select">
+                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Gender</label>
+                            <select name="gender" class="form-select px-3 fw-medium" style="border-radius: 8px; height: 42px;">
                                 <option value="M">Boy</option>
                                 <option value="F">Girl</option>
                             </select>
                         </div>
                         <div class="col-6">
-                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Class Stream Block</label>
-                            <input type="text" name="class_stream" class="form-control" placeholder="e.g., Grade 4" required autocomplete="off">
+                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Class Stream Block</label>
+                            <select name="class_stream" class="form-select px-3 fw-semibold" required style="border-radius: 8px; height: 42px;">
+                                <option value="" disabled selected hidden>-- Select Class --</option>
+                                <option value="Playground">🧸 Playground</option>
+                                <option value="PP1">✏️ PP1</option>
+                                <option value="PP2">🎒 PP2</option>
+                                <option value="Grade 1">📚 Grade 1</option>
+                                <option value="Grade 2">📚 Grade 2</option>
+                                <option value="Grade 3">📚 Grade 3</option>
+                                <option value="Grade 4">📚 Grade 4</option>
+                                <option value="Grade 5">📚 Grade 5</option>
+                                <option value="Grade 6">📚 Grade 6</option>
+                            </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Primary Guardian Name</label>
-                            <input type="text" name="guardian_name" class="form-control" placeholder="Parent or Sponsor name" required autocomplete="off">
+                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Primary Guardian Name</label>
+                            <input type="text" name="guardian_name" class="form-control px-3" placeholder="Parent or Sponsor Full Name" required autocomplete="off" style="border-radius: 8px; height: 42px;">
                         </div>
                         <div class="col-12">
-                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Parent Mobile Contact Line</label>
-                            <input type="text" name="parent_phone" class="form-control" placeholder="e.g., 0700000000" required autocomplete="off">
+                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Parent Mobile Contact Line</label>
+                            <input type="text" name="parent_phone" class="form-control px-3 font-monospace" placeholder="e.g., 0712345678" required autocomplete="off" style="border-radius: 8px; height: 42px;">
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light p-3 rounded-bottom-4 border-top">
-                    <button type="button" class="btn btn-secondary fw-semibold rounded-3" data-bs-dismiss="modal">Dismiss</button>
-                    <button type="submit" class="btn btn-primary fw-bold rounded-3 px-4">Commit to Database</button>
+                <div class="modal-footer bg-white p-3 border-top d-flex justify-content-between" style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+                    <button type="button" class="btn btn-light fw-semibold px-4 rounded-3" data-bs-dismiss="modal" style="height: 40px;">Dismiss</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4 rounded-3" style="height: 40px; background-color: #2563eb; border: none;">Commit to Database</button>
                 </div>
             </form>
         </div>

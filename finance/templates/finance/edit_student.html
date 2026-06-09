@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Modify Learner Profile Matrix</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_exempt %}
+                <div class="mb-3">
+                    <label class="form-label font-weight-bold">Admission Number</label>
+                    <input type="text" class="form-value form-control bg-light" value="{{ student.admission_number }}" readonly>
+                    <small class="text-muted">Database indices locked to avoid tracking structural fractures.</small>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">First Name</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ student.first_name }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ student.last_name }}" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Gender Parameter</label>
+                        <select name="gender" class="form-select form-control">
+                            <option value="M" {% if student.gender == 'M' %}selected{% endif %}>Male</option>
+                            <option value="F" {% if student.gender == 'F' %}selected{% endif %}>Female</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Class Stream Assignation</label>
+                        <input type="text" name="class_stream" class="form-control" value="{{ student.class_stream.name }}" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Primary Guardian Name</label>
+                    <input type="text" name="guardian_name" class="form-control" value="{{ student.guardian_name }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Parent Communication Line Phone</label>
+                    <input type="text" name="parent_phone" class="form-control" value="{{ student.parent_phone }}">
+                </div>
+                <div class="d-flex justify-content-between pt-2">
+                    <a href="{% url 'student_registry' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary shadow-sm">Save Structural Updates</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
