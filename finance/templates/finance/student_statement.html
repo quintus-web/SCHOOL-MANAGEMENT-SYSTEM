@@ -1,0 +1,87 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Account Statement - {{ student.first_name }} {{ student.last_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div>
+        <a href="{% url 'bursar_dashboard' %}" class="btn btn-sm btn-outline-secondary rounded-3 mb-2">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+        <h3 class="fw-bold text-dark mb-0">Official Student Ledger</h3>
+    </div>
+    <button onclick="window.print();" class="btn btn-dark px-4 fw-semibold rounded-3 shadow-sm">
+        <i class="bi bi-printer me-2"></i> Print Statement
+    </button>
+</div>
+
+<div class="card card-custom p-4 mb-4 border-start border-3 border-primary">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <span class="text-muted small text-uppercase fw-bold font-monospace">Student File Reference</span>
+            <h4 class="fw-bold text-slate-900 mb-1" style="color: #0f172a;">{{ student.first_name }} {{ student.middle_name|default:'' }} {{ student.last_name }}</h4>
+            <p class="text-muted mb-0">
+                <span class="me-3"><strong>ADM:</strong> <code>{{ student.admission_number }}</code></span>
+                <span><strong>Stream:</strong> {{ student.class_stream.name }}</span>
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <span class="text-muted small text-uppercase d-block fw-semibold">Outstanding Balance</span>
+            {% if student.current_balance > 0 %}
+                <h3 class="fw-bold text-danger mb-0">KES {{ student.current_balance|floatformat:2 }}</h3>
+            {% else %}
+                <h3 class="fw-bold text-success mb-0"><i class="bi bi-check-circle-fill"></i> Cleared</h3>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card card-custom">
+    <div class="card-header bg-white py-3 border-bottom">
+        <h6 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Transaction History Timeline</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4" style="width: 15%;">Transaction Date</th>
+                    <th style="width: 20%;">Reference Code</th>
+                    <th style="width: 35%;">Description Mapping</th>
+                    <th class="text-end" style="width: 15%;">Debit (Owed)</th>
+                    <th class="text-end pe-4" style="width: 15%;">Credit (Paid)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in ledger_entries %}
+                <tr class="border-bottom">
+                    <td class="ps-4 small text-secondary font-monospace">{{ entry.date|date:"Y-m-d H:i" }}</td>
+                    <td><code class="fw-semibold text-dark">{{ entry.reference }}</code></td>
+                    <td><span class="small text-slate-700 fw-medium">{{ entry.description }}</span></td>
+                    <td class="text-end text-danger fw-semibold font-monospace">
+                        {% if entry.type == 'DEBIT' %}
+                            KES {{ entry.amount|floatformat:2 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="text-end text-success fw-semibold font-monospace pe-4">
+                        {% if entry.type == 'CREDIT' %}
+                            KES {{ entry.amount|floatformat:2 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        <i class="bi bi-folder-x text-muted mb-2 d-block" style="font-size: 2.5rem;"></i>
+                        <p class="mb-0 small fw-medium">No ledger transaction statements found inside this database profile folder.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
