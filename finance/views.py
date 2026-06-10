@@ -109,8 +109,27 @@ def student_registry_workstation(request):
 @login_required
 def single_student_profile_folder(request, student_id):
     student = get_object_or_404(Student, id=student_id)
+    discipline_logs = student.discipline_logs.all().order_by('-date_reported')[:10]
+    invoices = student.fee_invoices.all().order_by('-date_issued')[:10]
+    receipts = student.fee_receipts.all().order_by('-date_paid')[:10]
+    attendance_records = student.attendance_history.all().order_by('-date')[:20]
+    exam_records = ExamRecord.objects.filter(student=student).select_related('subject').order_by('-year', '-term')[:20]
+    total_paid = sum((r.amount for r in receipts), Decimal("0.00"))
+    att_all = student.attendance_history.all()
+    attendance_total = att_all.count()
+    attendance_present = sum(1 for r in att_all if r.is_present)
+    attendance_pct = round((attendance_present / attendance_total) * 100, 1) if attendance_total else 100.0
     return render(request, "finance/student_profile_folder.html", {
-        "student": student
+        "student": student,
+        "discipline_logs": discipline_logs,
+        "invoices": invoices,
+        "receipts": receipts,
+        "attendance_records": attendance_records,
+        "exam_records": exam_records,
+        "total_paid": total_paid,
+        "attendance_total": attendance_total,
+        "attendance_present": attendance_present,
+        "attendance_pct": attendance_pct
     })
 
 
