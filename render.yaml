@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: school-management-system
+    runtime: python-3-12
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn sms_core.wsgi:application --log-file -"
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.9"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SETTINGS_MODULE
+        value: "sms_core.settings"
+    databases:
+      - name: school-db
+        plan: free

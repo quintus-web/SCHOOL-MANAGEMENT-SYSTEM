@@ -2,31 +2,33 @@
 import os
 from pathlib import Path
 
+import dj_database_url
+import environ
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# 🎯 FIXED: Environment-hardened key initialization block
-SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY', 
-    'django-insecure-ypx*^vy2-%wj23lotuzn-ngd!jluip-*)^=vhq#%4dzsojhm2v'
-)
+SECRET_KEY = env('SECRET_KEY', default='django-insecure-ypx*^vy2-%wj23lotuzn-ngd!jluip-*)^=vhq#%4dzsojhm2v')
+DEBUG = env.bool('DEBUG', default=False)
 
-DEBUG = True
+if os.environ.get('RENDER'):
+    ALLOWED_HOSTS = [os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')]
+elif os.environ.get('DATABASE_URL'):
+    ALLOWED_HOSTS = ['0.0.0.0', '127.0.0.1', 'localhost']
+else:
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.50']
 
-ALLOWED_HOSTS = ['*']
-
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'finance.apps.FinanceConfig',
-]
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL', f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
+        conn_max_age=600,
+    )
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -54,13 +56,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sms_core.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -75,19 +70,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-# 🎯 FIXED: Explicitly maps the authentication gate to your custom gateway login path
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# 🎯 FIXED: Direct overrides to route all authentication requests to your custom gateway
 LOGIN_URL = '/gateway/login/'
 LOGIN_REDIRECT_URL = '/'
-
-# ── SECURITY & SESSION HARDENING CONTROLS ──
-# 🎯 FIXED: Automatically expires sessions when the browser window close event triggers
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-# 🎯 FIXED: Hardens session lifespan to 3600 seconds (1 hour of continuous idle time)
 SESSION_COOKIE_AGE = 3600
-
-# Prevent client-side scripts from accessing auth session tokens (mitigates XSS risks)
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
