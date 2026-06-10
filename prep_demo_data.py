@@ -15,7 +15,7 @@ except ModuleNotFoundError:
 from finance.models import Teacher, ClassStream, Subject, Student, FeeInvoice, ExamRecord, FeeReceipt
 
 def stage_demo_environment():
-    print("✨ Purging old entries and staging comprehensive database framework for Kabiero Academy...")
+    print("✨ Purging old entries and staging comprehensive database framework for Crescent Heights Academy...")
     
     # 1. Clear existing records in strict dependency order to prevent foreign key errors
     ExamRecord.objects.all().delete()
