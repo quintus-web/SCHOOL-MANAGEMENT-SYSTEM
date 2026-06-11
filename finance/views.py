@@ -40,7 +40,7 @@ class LiveCSVStudent:
         self.first_name = parts[0]
         self.last_name = parts[1] if len(parts) > 1 else ""
         self.gender = row[2].strip() if len(row) > 2 else ""
-        self.current_grade = row[5].strip() if len(row) > 5 else "Playground"
+        self.current_grade = row[5].strip() if len(row) > 5 else "Playgroup"
 
         class Stream:
             def __init__(self, name):
@@ -460,7 +460,7 @@ def teacher_sms_broadcast(request):
 @csrf_exempt
 def daily_attendance_deck(request):
     # Authentic Kenyan CBC Grade Sort Sequence Order List
-    ordered_grades = ["Playground", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
+    ordered_grades = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
     
     db_streams = set(Student.objects.filter(class_stream__isnull=False).values_list('class_stream__name', flat=True))
     streams = [g for g in ordered_grades if g in db_streams] or ordered_grades

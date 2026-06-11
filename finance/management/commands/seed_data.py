@@ -62,6 +62,21 @@ class Command(BaseCommand):
             stream_count = 0
             invoice_count = 0
 
+            core_subjects = [
+                ("Mathematics", "MAT101"),
+                ("English", "ENG101"),
+                ("Kiswahili", "KIS101"),
+                ("Science", "SCI101"),
+                ("Social Studies", "SST101"),
+                ("CRE", "CRE101"),
+                ("Art & Craft", "ART101"),
+                ("Music", "MUS101"),
+                ("Physical Education", "PE101"),
+                ("Agriculture", "AGR101"),
+            ]
+            for name, code in core_subjects:
+                Subject.objects.get_or_create(code=code, defaults={"name": name})
+
             for row in reader:
                 if not row or len(row) < 6:
                     continue
