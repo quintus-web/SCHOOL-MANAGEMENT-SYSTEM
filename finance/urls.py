@@ -32,6 +32,7 @@ urlpatterns = [
     path('academic/grading-desk/', views.marks_entry_portal, name='marks_entry_portal'),
     path('academic/analytics/', views.academic_analytics_dashboard, name='academic_analytics'),
     path('academic/report-card/<int:student_id>/pdf/', views.generate_report_card_view, name='generate_report_card'),
+    path('academic/post-homework/', views.post_homework_assignment, name='post_homework'),
     
     # ── EXTERNAL PARENT GATEWAY SYSTEM ──
     path('parent-portal/', views.parent_portal_gateway, name='parent_portal_gateway'),

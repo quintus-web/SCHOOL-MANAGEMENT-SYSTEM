@@ -25,6 +25,39 @@ from .models import (
     LessonPlan, LearningMaterial, TimetableSlot
 )
 
+CORE_SUBJECTS = [
+    ("Mathematics", "MAT101"),
+    ("English", "ENG101"),
+    ("Kiswahili", "KIS101"),
+    ("Science", "SCI101"),
+    ("Social Studies", "SST101"),
+    ("CRE", "CRE101"),
+    ("Art & Craft", "ART101"),
+    ("Music", "MUS101"),
+    ("Physical Education", "PE101"),
+    ("Agriculture", "AGR101"),
+]
+
+VALID_GRADES = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
+
+
+def _get_subjects():
+    if not Subject.objects.exists():
+        Subject.objects.bulk_create([
+            Subject(code=code, name=name)
+            for name, code in CORE_SUBJECTS
+        ])
+    return Subject.objects.all().order_by('name')
+
+
+def _get_valid_grade_streams():
+    return ClassStream.objects.filter(name__in=VALID_GRADES).order_by('name')
+
+
+def _get_valid_grade_names():
+    db_names = set(Student.objects.exclude(class_stream__isnull=True).values_list('class_stream__name', flat=True))
+    return [grade for grade in VALID_GRADES if grade in db_names] or VALID_GRADES
+
 # =========================================================
 # 1. CSV ENGINE LAYER (SINGLE SOURCE ROUTINE)
 # =========================================================
@@ -300,7 +333,7 @@ def financial_analytics(request):
         all_invoices = all_invoices.filter(student__class_stream__name=level_filter)
         all_receipts = all_receipts.filter(student__class_stream__name=level_filter)
 
-    levels = sorted(set(Student.objects.exclude(class_stream__isnull=True).values_list('class_stream__name', flat=True)))
+    levels = _get_valid_grade_names()
 
     expected = float(all_invoices.aggregate(total=Sum('amount'))['total'] or 0)
     collected = float(all_receipts.aggregate(total=Sum('amount'))['total'] or 0)
@@ -459,13 +492,10 @@ def teacher_sms_broadcast(request):
 @login_required
 @csrf_exempt
 def daily_attendance_deck(request):
-    # Authentic Kenyan CBC Grade Sort Sequence Order List
-    ordered_grades = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
-    
-    db_streams = set(Student.objects.filter(class_stream__isnull=False).values_list('class_stream__name', flat=True))
-    streams = [g for g in ordered_grades if g in db_streams] or ordered_grades
-
-    selected_stream = request.GET.get("stream_id", streams[0] if streams else "")
+    streams = _get_valid_grade_names()
+    selected_stream = request.GET.get("stream_id")
+    if not selected_stream or selected_stream not in VALID_GRADES:
+        selected_stream = streams[0] if streams else ""
     current_date = timezone.now().date()
     
     students_in_stream = Student.objects.filter(
@@ -604,8 +634,8 @@ def academic_management_hub(request):
 @login_required
 def marks_entry_portal(request):
     """Renders a streamlined spreadsheet matrix for fast term marks collection"""
-    subjects = Subject.objects.all().order_by('name')
-    streams = ClassStream.objects.all().order_by('name')
+    subjects = _get_subjects()
+    streams = _get_valid_grade_streams()
     
     selected_subject_id = request.GET.get('subject')
     selected_stream_id = request.GET.get('stream')
@@ -801,29 +831,34 @@ def add_new_student_onboarding(request):
         guardian_name = request.POST.get("guardian_name")
         parent_phone = request.POST.get("parent_phone")
 
-        if adm_no and first_name and last_name:
-            try:
-                stream_instance = None
-                if class_stream_name:
-                    stream_instance, _ = ClassStream.objects.get_or_create(name=class_stream_name.strip())
-
-                Student.objects.update_or_create(
-                    admission_number=adm_no.strip(),
-                    defaults={
-                        'first_name': first_name.strip(),
-                        'last_name': last_name.strip(),
-                        'gender': 'F' if gender.upper() in ['F', 'GIRL', 'FEMALE'] else 'M',
-                        'class_stream': stream_instance,
-                        'guardian_name': guardian_name.strip() if guardian_name else "Not Provided",
-                        'parent_phone': parent_phone.strip() if parent_phone else "0700000000",
-                        'current_balance': 0.00
-                    }
-                )
-                messages.success(request, f"Success! {first_name} has been added to the registry.")
-            except Exception as e:
-                messages.error(request, f"Database error: {str(e)}")
-        else:
+        if not (adm_no and first_name and last_name):
             messages.error(request, "Required fields are missing.")
+            return redirect('/registry/learners/')
+
+        if class_stream_name and class_stream_name.strip() not in VALID_GRADES:
+            messages.error(request, "Select a valid class stream from Grade 1 to Grade 6.")
+            return redirect('/registry/learners/')
+
+        try:
+            stream_instance = None
+            if class_stream_name:
+                stream_instance, _ = ClassStream.objects.get_or_create(name=class_stream_name.strip())
+
+            Student.objects.update_or_create(
+                admission_number=adm_no.strip(),
+                defaults={
+                    'first_name': first_name.strip(),
+                    'last_name': last_name.strip(),
+                    'gender': 'F' if gender.upper() in ['F', 'GIRL', 'FEMALE'] else 'M',
+                    'class_stream': stream_instance,
+                    'guardian_name': guardian_name.strip() if guardian_name else "Not Provided",
+                    'parent_phone': parent_phone.strip() if parent_phone else "0700000000",
+                    'current_balance': 0.00
+                }
+            )
+            messages.success(request, f"Success! {first_name} has been added to the registry.")
+        except Exception as e:
+            messages.error(request, f"Database error: {str(e)}")
             
     return redirect('/registry/learners/')
 
@@ -843,7 +878,7 @@ def academic_analytics_dashboard(request):
     selected_term = request.GET.get('term', 'TERM_2')
     year = int(request.GET.get('year', 2026))
     
-    all_streams = ClassStream.objects.all()
+    all_streams = _get_valid_grade_streams()
     stream_rankings = []
     for stream in all_streams:
         records = ExamRecord.objects.filter(student__class_stream=stream, term=selected_term, year=year).select_related('student', 'subject')
@@ -947,6 +982,8 @@ def delete_student_record(request, student_id):
 @login_required
 def attendance_history_report(request):
     selected_stream = request.GET.get("stream_id", "")
+    if selected_stream and selected_stream not in VALID_GRADES:
+        selected_stream = ""
     selected_date = request.GET.get("date", timezone.now().date().isoformat())
 
     students_in_stream = Student.objects.none()
@@ -976,9 +1013,7 @@ def attendance_history_report(request):
             "percentage": round((present_count / total_for_day) * 100, 1) if total_for_day else 0.0
         }
 
-    db_streams = sorted(
-        set(Student.objects.exclude(class_stream__isnull=True).values_list('class_stream__name', flat=True))
-    )
+    db_streams = _get_valid_grade_names()
 
     student_rows = []
     for student in students_in_stream:
@@ -1112,8 +1147,8 @@ def leave_management(request):
 
 @login_required
 def post_homework_assignment(request):
-    subjects = Subject.objects.all().order_by('name')
-    streams = ClassStream.objects.all().order_by('name')
+    subjects = _get_subjects()
+    streams = _get_valid_grade_streams()
     
     if request.method == "POST":
         stream_id = request.POST.get("stream")

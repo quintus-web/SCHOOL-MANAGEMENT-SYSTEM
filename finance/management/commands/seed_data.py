@@ -5,6 +5,13 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 from finance.models import Student, ClassStream, Subject, FeeStructure, FeeInvoice
 
+VALID_GRADES = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
+
+
+def normalize_grade(raw_grade):
+    grade = (raw_grade or "").strip()
+    return grade if grade in VALID_GRADES else "Grade 1"
+
 class Command(BaseCommand):
     help = "Parses the master school CSV dataset and seeds the SQLite database tables seamlessly."
 
@@ -84,7 +91,7 @@ class Command(BaseCommand):
                 adm_no = row[0].strip()
                 full_name = row[1].strip()
                 gender_raw = row[2].strip().upper()
-                stream_name = row[5].strip()
+                stream_name = normalize_grade(row[5])
                 guardian = row[8].strip() if len(row) > 8 else "Not Provided"
                 phone = row[9].strip() if len(row) > 9 else "0700000000"
 
