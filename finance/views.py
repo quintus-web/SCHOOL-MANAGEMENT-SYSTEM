@@ -38,7 +38,7 @@ CORE_SUBJECTS = [
     ("Agriculture", "AGR101"),
 ]
 
-VALID_GRADES = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
+VALID_GRADES = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
 
 
 def _get_subjects():
@@ -836,7 +836,7 @@ def add_new_student_onboarding(request):
             return redirect('/registry/learners/')
 
         if class_stream_name and class_stream_name.strip() not in VALID_GRADES:
-            messages.error(request, "Select a valid class stream from Grade 1 to Grade 6.")
+            messages.error(request, "Select a valid class stream from Playgroup, PP1, PP2, or Grade 1 to Grade 6.")
             return redirect('/registry/learners/')
 
         try:
