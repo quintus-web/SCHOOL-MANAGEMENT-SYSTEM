@@ -108,15 +108,28 @@ def _load_students_from_csv():
 
 @login_required
 def executive_analytics_kpi_dashboard(request):
-    csv_students = _load_students_from_csv()
-    total_receipts = FeeReceipt.objects.aggregate(total=Sum("amount"))["total"] or 0
-    total_invoiced = FeeInvoice.objects.aggregate(total=Sum("amount"))["total"] or 0
+    total_learners = Student.objects.filter(is_active=True).count()
+    total_instructors = StaffProfile.objects.filter(role_designation='TEACHER', current_status='ACTIVE').count()
 
-    return render(request, "portal/executive_kpis.html", {
-        "total_receipts": total_receipts,
+    total_invoiced = FeeInvoice.objects.aggregate(total=Sum('amount'))['total'] or 0.00
+    total_collected = FeeReceipt.objects.filter(status='COMPLETED').aggregate(total=Sum('amount'))['total'] or 0.00
+    total_outstanding_arrears = Student.objects.filter(is_active=True).aggregate(total=Sum('current_balance'))['total'] or 0.00
+
+    collection_efficiency = (float(total_collected) / float(total_invoiced) * 100) if total_invoiced > 0 else 0.0
+
+    total_assets = SchoolAsset.objects.aggregate(total=Sum('total_quantity'))['total'] or 0
+    assets_in_workshop = SchoolAsset.objects.filter(status='UNDER_REPAIR').count()
+    facility_operational_rate = ((total_assets - assets_in_workshop) / total_assets * 100) if total_assets > 0 else 100.0
+
+    return render(request, "finance/executive_reporting.html", {
+        "total_students": total_learners,
+        "total_teachers": total_instructors,
         "total_invoiced": total_invoiced,
-        "active_learners_count": len(csv_students),
-        "unresolved_balances": Student.objects.aggregate(total=Sum("current_balance"))["total"] or 0,
+        "total_collected": total_collected,
+        "total_arrears": total_outstanding_arrears,
+        "collection_efficiency": round(collection_efficiency, 1),
+        "operational_rate": round(facility_operational_rate, 1),
+        "assets_at_risk": assets_in_workshop,
         "generation_date": timezone.now().date()
     })
 
@@ -379,12 +392,15 @@ def financial_analytics(request):
         })
 
     payment_channels = []
+    total_receipts = all_receipts.aggregate(total=Sum('amount'))['total'] or 0
     channel_qs = all_receipts.values('payment_channel').annotate(total=Sum('amount'), count=Count('id'))
     for ch in channel_qs:
+        channel_total = float(ch['total'] or 0)
         payment_channels.append({
             'channel': ch['payment_channel'] or 'CASH',
-            'total': float(ch['total'] or 0),
-            'count': ch['count']
+            'total': channel_total,
+            'count': ch['count'],
+            'share': round((channel_total / float(total_receipts)) * 100, 1) if total_receipts else 0.0
         })
 
     return render(request, "finance/financial_analytics.html", {

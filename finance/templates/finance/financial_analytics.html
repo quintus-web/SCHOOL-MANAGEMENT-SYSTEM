@@ -143,7 +143,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% set total_collected = collected %}
                         {% for ch in payment_channels %}
                         <tr class="border-bottom">
                             <td class="fw-semibold text-dark">
@@ -154,12 +153,11 @@
                             <td class="text-center">{{ ch.count }}</td>
                             <td class="text-end font-monospace fw-bold text-dark">{{ ch.total|floatformat:0 }}</td>
                             <td class="text-center">
-                                {% set share = (ch.total / total_collected * 100) if total_collected else 0 %}
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="progress flex-grow-1" style="height: 6px; min-width: 50px;">
-                                        <div class="progress-bar bg-secondary" style="width: {{ share }}%;"></div>
+                                        <div class="progress-bar bg-secondary" style="width: {{ ch.share }}%;"></div>
                                     </div>
-                                    <span class="small font-monospace text-muted">{{ share|floatformat:0 }}%</span>
+                                    <span class="small font-monospace text-muted">{{ ch.share|floatformat:0 }}%</span>
                                 </div>
                             </td>
                         </tr>
