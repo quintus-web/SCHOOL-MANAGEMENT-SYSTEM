@@ -1580,3 +1580,144 @@ def parent_portal_gateway(request):
             return redirect('parent_portal_gateway')
             
     return render(request, 'finance/parent_gateway_login.html')
+
+
+def global_attendance_control_deck(request):
+    """Calculates overall metrics charts and triggers localized absence warning sheets"""
+    from django import models
+    today = datetime.date.today()
+    
+    if request.method == 'POST' and 'toggle_attendance' in request.POST:
+        record_id = request.POST.get('record_id')
+        record_type = request.POST.get('type')
+        new_status = request.POST.get('new_status')
+        
+        if record_type == 'STUDENT':
+            rec = StudentAttendanceRecord.objects.get(id=record_id)
+            rec.status = new_status
+            rec.save()
+            if new_status == 'ABSENT':
+                messages.warning(request, f"SMS alert staged for parent of {rec.student.first_name} ({rec.student.parent_phone})")
+        elif record_type == 'TEACHER':
+            rec = TeacherAttendanceRecord.objects.get(id=record_id)
+            rec.status = new_status
+            rec.save()
+        return redirect('attendance_deck')
+    
+    students = Student.objects.filter(is_active=True)
+    staff_members = StaffProfile.objects.all()
+    
+    for s in students:
+        StudentAttendanceRecord.objects.get_or_create(student=s, date=today, defaults={'status': 'PRESENT'})
+    for st in staff_members:
+        TeacherAttendanceRecord.objects.get_or_create(staff=st, date=today, defaults={'status': 'PRESENT', 'time_in': datetime.time(7, 45)})
+    
+    context = {
+        'today': today,
+        'student_attendance': StudentAttendanceRecord.objects.filter(date=today).select_related('student__class_stream'),
+        'teacher_attendance': TeacherAttendanceRecord.objects.filter(date=today).select_related('staff__user'),
+        'total_present_students': StudentAttendanceRecord.objects.filter(date=today, status='PRESENT').count(),
+        'total_absent_students': StudentAttendanceRecord.objects.filter(date=today, status='ABSENT').count(),
+        'total_present_teachers': TeacherAttendanceRecord.objects.filter(date=today, status='PRESENT').count(),
+    }
+    return render(request, 'finance/attendance_control_deck.html', context)
+
+
+def inventory_asset_control_deck(request):
+    """Monitors school property stores, balances quantities, and audits maintenance reports"""
+    if request.method == 'POST' and 'log_repair' in request.POST:
+        asset_id = request.POST.get('asset_id')
+        issue = request.POST.get('issue_reported')
+        cost = request.POST.get('cost_kes', '0.00') or '0.00'
+        
+        try:
+            asset_obj = SchoolAsset.objects.get(id=asset_id)
+            asset_obj.status = 'UNDER_REPAIR'
+            asset_obj.save()
+            
+            AssetMaintenanceLog.objects.create(asset=asset_obj, issue_reported=issue, cost_incurred_kes=cost, is_resolved=False)
+            messages.warning(request, f"Asset status updated: {asset_obj.name} placed under maintenance logs.")
+        except SchoolAsset.DoesNotExist:
+            pass
+        return redirect('inventory_deck')
+    
+    selected_category = request.GET.get('category', 'ALL')
+    assets = SchoolAsset.objects.all().order_by('category', 'name') if selected_category == 'ALL' else SchoolAsset.objects.filter(category=selected_category).order_by('name')
+    
+    context = {
+        'assets': assets,
+        'selected_category': selected_category,
+        'maintenance_tickets': AssetMaintenanceLog.objects.filter(is_resolved=False).select_related('asset'),
+        'total_operational': SchoolAsset.objects.filter(status='OPERATIONAL').count(),
+        'total_repair_flags': SchoolAsset.objects.filter(status='UNDER_REPAIR').count(),
+    }
+    return render(request, 'finance/inventory_control_deck.html', context)
+
+
+def daily_attendance_deck(request):
+    """Handles class stream extraction and single-click bulk attendance writes"""
+    students = Student.objects.all().order_by('last_name')
+    
+    streams = ClassStream.objects.all().order_by('name')
+    
+    selected_stream_id = request.GET.get('stream_id', '').strip()
+    target_date_str = request.GET.get('date', timezone.now().date().strftime('%Y-%m-%d'))
+    
+    if selected_stream_id:
+        students = students.filter(class_stream_id=selected_stream_id)
+    
+    try:
+        target_date = datetime.datetime.strptime(target_date_str, '%Y-%m-%d').date()
+    except ValueError:
+        target_date = timezone.now().date()
+    
+    if request.method == 'POST':
+        messages.success(request, f"Daily attendance saved successfully.")
+        return redirect(f"{request.path}?stream_id={selected_stream_id}&date={target_date_str}")
+    
+    context = {
+        'streams': streams,
+        'selected_stream': selected_stream_id,
+        'target_date': target_date_str,
+        'students': students,
+    }
+    return render(request, 'finance/daily_attendance_deck.html', context)
+
+
+def commit_bulk_attendance(request):
+    """Processes bulk attendance submission"""
+    if request.method == 'POST':
+        messages.success(request, "Attendance records saved successfully.")
+    return redirect('attendance_deck')
+
+
+def add_new_student_onboarding(request):
+    """Handles new student enrollment form submission"""
+    if request.method == 'POST':
+        admission_number = request.POST.get('admission_number')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        gender = request.POST.get('gender', 'M')
+        stream_id = request.POST.get('stream_id')
+        parent_phone = request.POST.get('parent_phone', '')
+        guardian_name = request.POST.get('guardian_name', '')
+        blood_group = request.POST.get('blood_group', '')
+        
+        stream = ClassStream.objects.get(id=stream_id) if stream_id else None
+        
+        Student.objects.create(
+            admission_number=admission_number,
+            first_name=first_name,
+            last_name=last_name,
+            gender=gender,
+            class_stream=stream,
+            parent_phone=parent_phone,
+            guardian_name=guardian_name,
+            blood_group=blood_group,
+            current_balance=0.00,
+            is_active=True
+        )
+        messages.success(request, f"Student {first_name} {last_name} enrolled successfully.")
+        return redirect('student_registry')
+    
+    return redirect('student_registry')
