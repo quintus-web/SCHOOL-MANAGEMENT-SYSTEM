@@ -1,9 +1,15 @@
 # sms_core/urls.py
+from django.shortcuts import redirect
 from django.urls import path
 from finance import views
 
+def root_redirect(request):
+    if request.user.is_authenticated:
+        return views.bursar_dashboard(request)
+    return redirect('staff_login')
+
 urlpatterns = [
-    path('', views.bursar_dashboard, name='public_home'),
+    path('', root_redirect, name='public_home'),
     path('gateway/login/', views.staff_login_view, name='staff_login'),
     path('gateway/logout/', views.staff_logout_view, name='staff_logout'),
     path('portal/executive-kpis/', views.executive_analytics_kpi_dashboard, name='executive_kpis'),

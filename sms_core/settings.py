@@ -7,13 +7,15 @@ import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+env_file = os.path.join(BASE_DIR, '.env')
+if os.path.exists(env_file):
+    environ.Env.read_env(env_file)
 
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-ypx*^vy2-%wj23lotuzn-ngd!jluip-*)^=vhq#%4dzsojhm2v')
 DEBUG = env.bool('DEBUG', default=False)
 
 if os.environ.get('RENDER'):
-    ALLOWED_HOSTS = [os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')]
+    ALLOWED_HOSTS = [h.strip() for h in os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').split(',') if h]
 elif os.environ.get('DATABASE_URL'):
     ALLOWED_HOSTS = ['0.0.0.0', '127.0.0.1', 'localhost']
 else:
