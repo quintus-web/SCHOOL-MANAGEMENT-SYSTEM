@@ -1470,4 +1470,40 @@ def academic_management_hub(request):
 
 @login_required
 def marks_entry_portal(request):
-    pass
+    """Renders a streamlined spreadsheet matrix for fast term marks collection"""
+    subjects = Subject.objects.all().order_by('name')
+    streams = ClassStream.objects.all().order_by('name')
+    
+    selected_subject_id = request.GET.get('subject')
+    selected_stream_id = request.GET.get('stream')
+    selected_term = request.GET.get('term', 'TERM_1')
+    selected_year = request.GET.get('year', '2026')
+    
+    matrix_data = []
+    
+    if selected_subject_id and selected_stream_id:
+        students = Student.objects.filter(class_stream_id=selected_stream_id, is_active=True).order_by('last_name')
+        for student in students:
+            record = ExamRecord.objects.filter(
+                student=student, 
+                subject_id=selected_subject_id, 
+                year=selected_year
+            ).first()
+            matrix_data.append({
+                'student': student,
+                'cat_1': record.cat_1 if record else '',
+                'cat_2': record.cat_2 if record else '',
+                'final_exam': record.final_exam if record else '',
+                'total_marks': record.total_marks if record else None
+            })
+    
+    context = {
+        'subjects': subjects,
+        'streams': streams,
+        'matrix_data': matrix_data,
+        'selected_subject': int(selected_subject_id) if selected_subject_id else None,
+        'selected_stream': int(selected_stream_id) if selected_stream_id else None,
+        'selected_term': selected_term,
+        'selected_year': selected_year,
+    }
+    return render(request, 'finance/marks_entry_portal.html', context)
