@@ -1470,3 +1470,4 @@ def academic_management_hub(request):
 
 @login_required
 def marks_entry_portal(request):
+    pass
