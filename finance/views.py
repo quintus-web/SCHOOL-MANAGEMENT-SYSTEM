@@ -675,47 +675,7 @@ def teacher_sms_broadcast(request):
                 result = resp.json()
                 if result.get("SMSMessageData", {}).get("Recipients"):
                     success_count += 1
-    elif report_type == "attendance":
-        stream = request.GET.get("stream_id", "")
-        date_from = request.GET.get("date_from", "")
-        date_to = request.GET.get("date_to", "")
-        qs = StudentAttendanceRecord.objects.all().select_related('student__class_stream')
-        if stream:
-            qs = qs.filter(student__class_stream__name=stream)
-        if date_from:
-            qs = qs.filter(date__gte=date_from)
-        if date_to:
-            qs = qs.filter(date__lte=date_to)
-        report_data = []
-        for rec in qs.order_by('-date', 'student__first_name'):
-            report_data.append({
-                'log': rec, 'date': rec.date
-            })
-        report_title = "Attendance Register"
-        headers = ["Date", "Admission No", "Student Name", "Stream", "Status", "Remarks"]
-
-    elif report_type == "grading":
-        term_g = request.GET.get("term", "TERM_1")
-        stream_g = request.GET.get("stream", "")
-        subject_g = request.GET.get("subject", "")
-        year_g = int(request.GET.get("year", 2026))
-        subjects_qs = Subject.objects.all().order_by('name')
-        qs = ExamRecord.objects.filter(term=term_g, year=year_g).select_related('student', 'student__class_stream', 'subject')
-        if stream_g:
-            qs = qs.filter(student__class_stream__name=stream_g)
-        if subject_g:
-            qs = qs.filter(subject_id=subject_g)
-        report_data = []
-        for rec in qs.order_by('student__last_name', 'subject__name'):
-            report_data.append({
-                'student': rec.student, 'subject': rec.subject, 'term': rec.term,
-                'year': rec.year, 'cat_1': rec.cat_1, 'cat_2': rec.cat_2,
-                'final_exam': rec.final_exam, 'total_marks': rec.total_marks
-            })
-        report_title = f"Grading Register - {term_g.replace('_',' ')} {year_g}"
-        headers = ["Admission No", "Student Name", "Stream", "Subject", "Term", "Year", "CAT 1", "CAT 2", "Final Exam", "Total Marks"]
-
-    else:
+                else:
                     error_count += 1
             except Exception:
                 error_count += 1
@@ -743,412 +703,6 @@ def teacher_sms_broadcast(request):
         "recipients": recipients,
         "total_recipients": len(recipients),
     })
-
-
-# =========================================================
-# 6. ATTENDANCE & LOGISTICS MODULES
-# =========================================================
-
-@login_required
-@csrf_exempt
-def daily_attendance_deck(request):
-    streams = _get_valid_grade_names()
-    selected_stream = request.GET.get("stream_id")
-    if not selected_stream or selected_stream not in VALID_GRADES:
-        selected_stream = streams[0] if streams else ""
-    current_date = timezone.now().date()
-    
-    students_in_stream = Student.objects.filter(
-        class_stream__name=selected_stream, 
-        status='ACTIVE'
-    ).order_by('first_name')
-    
-    existing_logs = {
-        log.student_id: "PRESENT" if log.is_present else "ABSENT"
-        for log in StudentAttendanceRecord.objects.filter(date=current_date, student__class_stream__name=selected_stream)
-    }
-
-    return render(request, "finance/daily_attendance_deck.html", {
-        "streams": streams,
-        "selected_stream": selected_stream,
-        "students": students_in_stream,
-        "existing_logs": existing_logs,
-        "current_date": current_date,
-        "current_page": "attendance"
-    })
-
-
-@login_required
-@csrf_exempt
-def commit_bulk_attendance(request):
-    if request.method == "POST":
-        class_stream = request.POST.get("class_stream")
-        current_date = timezone.now().date()
-        student_ids = request.POST.getlist("student_ids")
-        
-        if not student_ids:
-            messages.warning(request, "No student profile records were found to register.")
-            return redirect(f"/attendance/daily-deck/?stream_id={class_stream}")
-            
-        saved_count = 0
-        try:
-            for s_id in student_ids:
-                status = request.POST.get(f"status_{s_id}", "PRESENT")
-                is_present_bool = True if status == "PRESENT" else False
-                student_instance = Student.objects.get(id=int(s_id))
-                
-                StudentAttendanceRecord.objects.update_or_create(
-                    student=student_instance,
-                    date=current_date,
-                    defaults={
-                        'is_present': is_present_bool,
-                        'remarks': f"Marked by {request.user.username}"
-                    }
-                )
-                saved_count += 1
-                
-            messages.success(request, f"Success! {saved_count} roll-call records have been saved to the database.")
-        except Exception as e:
-            messages.error(request, f"Critical database tracking failure: {str(e)}")
-            
-        return redirect(f"/attendance/daily-deck/?stream_id={class_stream}")
-        
-    return redirect('/attendance/daily-deck/')
-
-
-@login_required
-def global_attendance_control_deck(request):
-    return render(request, "finance/global_attendance_deck.html")
-
-
-@login_required
-def absentee_report(request):
-    return render(request, "finance/absentee_report.html")
-
-
-@login_required
-def attendance_analytics(request):
-    return render(request, "finance/attendance_analytics.html")
-
-
-@login_required
-def inventory_asset_control_deck(request):
-    assets = SchoolAsset.objects.all().order_by('category', 'name')
-    selected_category = request.GET.get('category', 'ALL')
-    if selected_category != 'ALL':
-        assets = assets.filter(category=selected_category)
-    
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        if action == 'add':
-            SchoolAsset.objects.create(
-                name=request.POST.get('name', '').strip(),
-                serial_or_isbn=request.POST.get('serial', '').strip(),
-                category=request.POST.get('category', 'TEXTBOOKS'),
-                total_quantity=int(request.POST.get('total_qty', 1)),
-                available_quantity=int(request.POST.get('available_qty', 1)),
-                assigned_location=request.POST.get('location', '').strip(),
-                status=request.POST.get('status', 'OPERATIONAL'),
-            )
-            messages.success(request, "New asset registered successfully.")
-            return redirect('inventory_deck')
-        elif action == 'edit':
-            asset = get_object_or_404(SchoolAsset, id=request.POST.get('asset_id'))
-            asset.name = request.POST.get('name', '').strip()
-            asset.serial_or_isbn = request.POST.get('serial', '').strip()
-            asset.category = request.POST.get('category', 'TEXTBOOKS')
-            asset.total_quantity = int(request.POST.get('total_qty', 1))
-            asset.available_quantity = int(request.POST.get('available_qty', 1))
-            asset.assigned_location = request.POST.get('location', '').strip()
-            asset.status = request.POST.get('status', 'OPERATIONAL')
-            asset.save()
-            messages.success(request, f"Asset '{asset.name}' updated successfully.")
-            return redirect('inventory_deck')
-        elif action == 'delete':
-            asset = get_object_or_404(SchoolAsset, id=request.POST.get('asset_id'))
-            asset_name = asset.name
-            asset.delete()
-            messages.warning(request, f"'{asset_name}' has been removed from the inventory.")
-            return redirect('inventory_deck')
-    
-    maintenance_tickets = AssetMaintenanceLog.objects.filter(is_resolved=False).select_related('asset')
-    context = {
-        'assets': assets,
-        'selected_category': selected_category,
-        'maintenance_tickets': maintenance_tickets,
-        'total_operational': SchoolAsset.objects.filter(status='OPERATIONAL').count(),
-        'total_repair_flags': SchoolAsset.objects.filter(status='UNDER_REPAIR').count(),
-    }
-    return render(request, "finance/inventory_control_deck.html", context)
-
-
-# =========================================================
-# 7. ACADEMIC GRADE WORKSTATIONS
-# =========================================================
-
-@login_required
-def academic_management_hub(request):
-    VALID_GRADES = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
-    grade_summary = []
-    for grade in VALID_GRADES:
-        count = Student.objects.filter(status='ACTIVE', is_active=True, class_stream__name=grade).count()
-        grade_summary.append({'grade': grade, 'count': count})
-
-    streams = _get_valid_grade_streams()
-    selected_stream_id = request.GET.get("stream_id")
-    if selected_stream_id:
-        active_stream = streams.filter(id=selected_stream_id).first()
-    else:
-        active_stream = streams.first()
-
-    timetable = []
-    lesson_plans = []
-    learning_materials = []
-    if active_stream:
-        timetable = TimetableSlot.objects.filter(stream=active_stream).select_related('subject', 'teacher', 'stream').order_by('day', 'time_start')
-        lesson_plans = LessonPlan.objects.filter(stream=active_stream).select_related('subject', 'teacher').order_by('-week_number')[:10]
-        learning_materials = LearningMaterial.objects.filter(subject__in=Subject.objects.all()).order_by('-date_uploaded')[:10]
-
-    return render(request, "finance/academic_hub.html", {
-        "grade_summary": grade_summary,
-        "streams": streams,
-        "active_stream": active_stream,
-        "timetable": timetable,
-        "lesson_plans": lesson_plans,
-        "learning_materials": learning_materials,
-    })
-
-
-@login_required
-def marks_entry_portal(request):
-    """Renders a streamlined spreadsheet matrix for fast term marks collection"""
-    subjects = _get_subjects()
-    streams = _get_valid_grade_streams()
-    
-    selected_subject_id = request.GET.get('subject')
-    selected_stream_id = request.GET.get('stream')
-    term = request.GET.get('term', 'TERM_1')
-    year = int(request.GET.get('year', 2026))
-    
-    matrix_data = []
-    
-    if selected_subject_id and selected_stream_id:
-        students = Student.objects.filter(class_stream_id=selected_stream_id, is_active=True).order_by('last_name')
-        for student in students:
-            record = ExamRecord.objects.filter(student=student, subject_id=selected_subject_id, term=term, year=year).first()
-            matrix_data.append({
-                'student': student,
-                'cat_1': record.cat_1 if record else 0,
-                'cat_2': record.cat_2 if record else 0,
-                'final_exam': record.final_exam if record else 0,
-                'total_marks': record.total_marks if record else 0
-            })
-
-    if request.method == 'POST' and matrix_data:
-        saved_count = 0
-        for row in matrix_data:
-            student = row['student']
-            cat1 = request.POST.get(f'cat1_{student.id}', '0')
-            cat2 = request.POST.get(f'cat2_{student.id}', '0')
-            exam = request.POST.get(f'exam_{student.id}', '0')
-            
-            cat1 = max(0, min(30, int(cat1) if cat1.isdigit() else 0))
-            cat2 = max(0, min(30, int(cat2) if cat2.isdigit() else 0))
-            exam = max(0, min(40, int(exam) if exam.isdigit() else 0))
-            
-            ExamRecord.objects.update_or_create(
-                student=student,
-                subject_id=selected_subject_id,
-                term=term,
-                year=year,
-                defaults={
-                    'cat_1': cat1,
-                    'cat_2': cat2,
-                    'final_exam': exam
-                }
-            )
-            saved_count += 1
-        
-        messages.success(request, f"Examination score parameters compiled. {saved_count} records successfully saved.")
-        return redirect(f"{request.path}?subject={selected_subject_id}&stream={selected_stream_id}&term={term}&year={year}")
-
-    context = {
-        'subjects': subjects,
-        'streams': streams,
-        'matrix_data': matrix_data,
-        'selected_subject': int(selected_subject_id) if selected_subject_id else None,
-        'selected_stream': int(selected_stream_id) if selected_stream_id else None,
-        'selected_term': term,
-        'selected_year': year,
-    }
-    return render(request, "finance/marks_entry_portal.html", context)
-
-
-@login_required
-def generate_report_card_view(request, student_id):
-    """Aggregates scores and compiles an on-the-fly PDF Report Card for a specific student"""
-    from django.template.loader import render_to_string
-    
-    student = get_object_or_404(Student, id=student_id)
-    term = request.GET.get('term', 'TERM_1')
-    year = int(request.GET.get('year', 2026))
-    
-    exam_records = ExamRecord.objects.filter(student=student, term=term, year=year).select_related('subject')
-    
-    total_score = sum(r.total_marks for r in exam_records)
-    records_count = exam_records.count()
-    mean_score = (total_score / records_count) if records_count > 0 else 0.0
-    
-    if mean_score >= 80: mean_grade, remarks = 'A', 'Excellent performance. Keep it up.'
-    elif mean_score >= 70: mean_grade, remarks = 'B', 'Very good effort. Room for top tier.'
-    elif mean_score >= 50: mean_grade, remarks = 'C', 'Average achievement. Focus more on weak areas.'
-    else: mean_grade, remarks = 'D', 'Below expectation. Intensive remedial required.'
-
-    context = {
-        'student': student,
-        'exam_records': exam_records,
-        'total_score': total_score,
-        'mean_score': round(mean_score, 1),
-        'mean_grade': mean_grade,
-        'remarks': remarks,
-        'today': timezone.now(),
-        'term': term,
-        'year': year,
-    }
-    
-    try:
-        from weasyprint import HTML
-        html_string = render_to_string('finance/report_card_printout.html', context)
-        response = HttpResponse(content_type='application/pdf')
-        filename = f"report_card_{student.admission_number}_{term}_{year}.pdf"
-        response['Content-Disposition'] = f'inline; filename="{filename}"'
-        HTML(string=html_string).write_pdf(response)
-        return response
-    except (ImportError, OSError) as e:
-        html_string = render_to_string('finance/report_card_printout.html', context)
-        response = HttpResponse(html_string, content_type='text/html')
-        response['Content-Disposition'] = f'inline; filename="report_card_{student.admission_number}_{term}_{year}.html"'
-        messages.info(request, "PDF engine unavailable - rendering print-friendly HTML. Use browser Print to save as PDF.")
-        return response
-
-
-# =========================================================
-# 8. EXTERNAL ACCESS PORTALS
-# =========================================================
-
-def parent_portal_gateway(request):
-    return render(request, "finance/parent_portal.html")
-
-
-# =========================================================
-# 9. ACCESS CONTROL & SYSTEM SECURITIES
-# =========================================================
-
-def staff_login_view(request):
-    role = request.GET.get("role", "Admin")
-
-    if request.method == "POST":
-        user = authenticate(
-            request,
-            username=request.POST.get("username"),
-            password=request.POST.get("password")
-        )
-        if user:
-            login(request, user)
-            
-            # Bypass sidebar visibility restrictions for presentation account
-            if user.is_superuser:
-                request.session["active_role_context"] = "Headteacher"
-                request.session["role"] = "Headteacher"
-            else:
-                request.session["active_role_context"] = role
-                request.session["role"] = role
-                
-            return redirect("public_home")
-        
-        messages.error(request, "Operational authorization denied: Invalid terminal signatures.")
-
-    return render(request, "finance/staff_login.html", {"target_role": role})
-
-
-def staff_logout_view(request):
-    logout(request)
-    return redirect("public_home")
-
-
-@login_required
-def developer_debug_console_hub(request):
-    from finance.models import Student, ClassStream
-    from django.core.management import call_command
-    import io
-    from contextlib import redirect_stdout
-
-    if request.method == "POST":
-        action = request.POST.get("action", "")
-        if action == "purge":
-            Student.objects.all().delete()
-            messages.success(request, "Local development sandbox records truncated clean.")
-        elif action == "inject_mock_data":
-            buf = io.StringIO()
-            with redirect_stdout(buf):
-                call_command('seed_data', verbosity=0)
-            output = buf.getvalue()
-            count = Student.objects.count()
-            messages.success(request, f"Seed complete. {count} students loaded from CSV.")
-        return redirect('dev_debug_console')
-
-    return render(request, "finance/developer_debug_console.html", {
-        "total_students": Student.objects.count(),
-        "total_streams": ClassStream.objects.count(),
-        "total_infractions": 0,
-        "raw_students": Student.objects.all()[:10],
-        "raw_staff": []
-    })
-
-
-@login_required
-@csrf_exempt
-def add_new_student_onboarding(request):
-    """Processes frontend modal forms and registers new CBC learners cleanly."""
-    if request.method == "POST":
-        adm_no = request.POST.get("admission_number")
-        first_name = request.POST.get("first_name")
-        last_name = request.POST.get("last_name")
-        gender = request.POST.get("gender", "M")
-        class_stream_name = request.POST.get("class_stream")
-        guardian_name = request.POST.get("guardian_name")
-        parent_phone = request.POST.get("parent_phone")
-
-        if not (adm_no and first_name and last_name):
-            messages.error(request, "Required fields are missing.")
-            return redirect('/registry/learners/')
-
-        if class_stream_name and class_stream_name.strip() not in VALID_GRADES:
-            messages.error(request, "Select a valid class stream from Playgroup, PP1, PP2, or Grade 1 to Grade 6.")
-            return redirect('/registry/learners/')
-
-        try:
-            stream_instance = None
-            if class_stream_name:
-                stream_instance, _ = ClassStream.objects.get_or_create(name=class_stream_name.strip())
-
-            Student.objects.update_or_create(
-                admission_number=adm_no.strip(),
-                defaults={
-                    'first_name': first_name.strip(),
-                    'last_name': last_name.strip(),
-                    'gender': 'F' if gender.upper() in ['F', 'GIRL', 'FEMALE'] else 'M',
-                    'class_stream': stream_instance,
-                    'guardian_name': guardian_name.strip() if guardian_name else "Not Provided",
-                    'parent_phone': parent_phone.strip() if parent_phone else "0700000000",
-                    'current_balance': 0.00
-                }
-            )
-            messages.success(request, f"Success! {first_name} has been added to the registry.")
-        except Exception as e:
-            messages.error(request, f"Database error: {str(e)}")
-            
-    return redirect('/registry/learners/')
 
 
 # =========================================================
@@ -1228,6 +782,45 @@ def finance_reports_hub(request):
             })
         report_title = "Fee Defaulters Report"
         headers = ["Admission No", "Student Name", "Stream", "Balance (KES)", "Parent Phone"]
+
+    elif report_type == "attendance":
+        stream = request.GET.get("stream_id", "")
+        date_from = request.GET.get("date_from", "")
+        date_to = request.GET.get("date_to", "")
+        qs = StudentAttendanceRecord.objects.all().select_related('student__class_stream')
+        if stream:
+            qs = qs.filter(student__class_stream__name=stream)
+        if date_from:
+            qs = qs.filter(date__gte=date_from)
+        if date_to:
+            qs = qs.filter(date__lte=date_to)
+        report_data = []
+        for rec in qs.order_by('-date', 'student__first_name'):
+            report_data.append({
+                'log': rec, 'date': rec.date
+            })
+        report_title = "Attendance Register"
+        headers = ["Date", "Admission No", "Student Name", "Stream", "Status", "Remarks"]
+
+    elif report_type == "grading":
+        term_g = request.GET.get("term", "TERM_1")
+        stream_g = request.GET.get("stream", "")
+        subject_g = request.GET.get("subject", "")
+        year_g = int(request.GET.get("year", 2026))
+        qs = ExamRecord.objects.filter(term=term_g, year=year_g).select_related('student', 'student__class_stream', 'subject')
+        if stream_g:
+            qs = qs.filter(student__class_stream__name=stream_g)
+        if subject_g:
+            qs = qs.filter(subject_id=subject_g)
+        report_data = []
+        for rec in qs.order_by('student__last_name', 'subject__name'):
+            report_data.append({
+                'student': rec.student, 'subject': rec.subject, 'term': rec.term,
+                'year': rec.year, 'cat_1': rec.cat_1, 'cat_2': rec.cat_2,
+                'final_exam': rec.final_exam, 'total_marks': rec.total_marks
+            })
+        report_title = f"Grading Register - {term_g.replace('_',' ')} {year_g}"
+        headers = ["Admission No", "Student Name", "Stream", "Subject", "Term", "Year", "CAT 1", "CAT 2", "Final Exam", "Total Marks"]
 
     else:
         report_data = []
