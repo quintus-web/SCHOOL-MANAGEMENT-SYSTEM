@@ -1507,3 +1507,29 @@ def marks_entry_portal(request):
         'selected_year': selected_year,
     }
     return render(request, 'finance/marks_entry_portal.html', context)
+
+
+def generate_report_card_view(request, student_id):
+    """Aggregates scores and compiles an on-the-fly printable Report Card sheet for a specific student"""
+    student = get_object_or_404(Student, id=student_id)
+    exam_records = ExamRecord.objects.filter(student=student, year=2026).select_related('subject')
+    
+    total_score = sum(r.total_marks for r in exam_records)
+    records_count = exam_records.count()
+    mean_score = (total_score / records_count) if records_count > 0 else 0.0
+    
+    if mean_score >= 80: mean_grade, remarks = 'A', 'Excellent performance. Keep it up.'
+    elif mean_score >= 70: mean_grade, remarks = 'B', 'Very good effort. Room for top tier.'
+    elif mean_score >= 50: mean_grade, remarks = 'C', 'Average achievement. Focus more on weak areas.'
+    else: mean_grade, remarks = 'D', 'Below expectation. Intensive remedial required.'
+    
+    context = {
+        'student': student,
+        'exam_records': exam_records,
+        'total_score': total_score,
+        'mean_score': round(mean_score, 1),
+        'mean_grade': mean_grade,
+        'remarks': remarks,
+        'today': timezone.now()
+    }
+    return render(request, 'finance/report_card_printout.html', context)
