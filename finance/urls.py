@@ -5,7 +5,6 @@ from finance import views
 urlpatterns = [
     # ── CORE ACCESSIBLE WEB CHANNELS ──
     path('', views.bursar_dashboard, name='public_home'),
-    path('dev/debug-console/', views.developer_debug_console_hub, name='dev_debug_console'),
     
     # ── SECURITY & SESSIONS ACCESS WORKSPACES ──
     path('gateway/login/', views.staff_login_view, name='staff_login'),

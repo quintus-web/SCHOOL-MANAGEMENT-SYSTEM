@@ -4,7 +4,6 @@ from finance import views
 
 urlpatterns = [
     path('', views.bursar_dashboard, name='public_home'),
-    path('dev/debug-console/', views.developer_debug_console_hub, name='dev_debug_console'),
     path('gateway/login/', views.staff_login_view, name='staff_login'),
     path('gateway/logout/', views.staff_logout_view, name='staff_logout'),
     path('portal/executive-kpis/', views.executive_analytics_kpi_dashboard, name='executive_kpis'),

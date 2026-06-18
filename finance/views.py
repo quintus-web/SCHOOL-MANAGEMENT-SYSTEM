@@ -22,8 +22,10 @@ from .models import (
     StaffProfile,
     SchoolAsset, AssetMaintenanceLog,
     HomeworkAssignment, SchoolAnnouncement,
-    LessonPlan, LearningMaterial, TimetableSlot
+    LessonPlan, LearningMaterial, TimetableSlot,
+    DisciplineReport
 )
+from django.contrib.auth.models import User
 
 CORE_SUBJECTS = [
     ("Mathematics", "MAT101"),
@@ -1353,4 +1355,63 @@ def post_homework_assignment(request):
         "subjects": subjects,
         "streams": streams,
         "recent_assignments": recent_assignments,
-    }) 
+    })
+
+
+@login_required
+def developer_debug_console_hub(request):
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        action = request.POST.get('action')
+        if action == 'inject_mock_data':
+            alpha, _ = ClassStream.objects.get_or_create(name="Form 1 Alpha", defaults={"room_number": "Room 101", "capacity": 45})
+            beta, _ = ClassStream.objects.get_or_create(name="Form 2 Beta", defaults={"room_number": "Room 102", "capacity": 40})
+            mock_students = [
+                {"adm": "KAB/2026/001", "f": "Ezra", "l": "Kipchirchir", "g": "M", "b": "O+", "stream": alpha, "parent": "David Kipchirchir (ID: 87654321)", "phone": "0711223344"},
+                {"adm": "KAB/2026/002", "f": "Mercy", "l": "Wambui", "g": "F", "b": "A+", "stream": alpha, "parent": "Grace Wambui (ID: 24681012)", "phone": "0722334455"},
+                {"adm": "KAB/2026/003", "f": "Abdi", "l": "Idris", "g": "M", "b": "B+", "stream": beta, "parent": "Idris Farah (ID: 13579111)", "phone": "0733445566"},
+            ]
+            for s in mock_students:
+                Student.objects.get_or_create(
+                    admission_number=s["adm"],
+                    defaults={
+                        "first_name": s["f"], "last_name": s["l"], "gender": s["g"], "blood_group": s["b"], "class_stream": s["stream"],
+                        "guardian_name": s["parent"], "parent_phone": s["phone"], "known_allergies": "None", "current_balance": 35000.00
+                    }
+                )
+            staff_data = [
+                {"username": "mwangi_j", "first": "John", "last": "Mwangi", "num": "EMP/2026/101", "role": "TEACHER", "sal": 55000.00, "spec": "Chemistry / Biology"},
+                {"username": "amina_o", "first": "Amina", "last": "Omar", "num": "EMP/2026/102", "role": "PRINCIPAL", "sal": 95000.00, "spec": "Administration"},
+                {"username": "kamau_p", "first": "Peter", "last": "Kamau", "num": "EMP/2026/103", "role": "ACCOUNTANT", "sal": 60000.00, "spec": "Finance / Accounts"},
+            ]
+            for s in staff_data:
+                u, created = User.objects.get_or_create(username=s["username"], defaults={"first_name": s["first"], "last_name": s["last"]})
+                if created:
+                    u.set_password("sms_pass2026")
+                    u.save()
+                    StaffProfile.objects.get_or_create(user=u, employee_number=s["num"], defaults={"role_designation": s["role"], "base_salary_kes": s["sal"], "specialization": s["spec"], "current_status": "ACTIVE"})
+            maths_sub, _ = Subject.objects.get_or_create(name="Mathematics", defaults={"code": "MAT101"})
+            HomeworkAssignment.objects.get_or_create(stream=alpha, subject=maths_sub, title="Algebraic Expressions Review", defaults={"task_instructions": "Complete exercises 4B and 4C on page 92.", "submission_deadline": datetime.date.today() + datetime.timedelta(days=3)})
+            SchoolAnnouncement.objects.get_or_create(title="Upcoming Annual General Meeting (AGM)", defaults={"announcement_body": "Term 2 AGM is scheduled for next Friday at 10:00 AM.", "target_audience": "ALL_PARENTS"})
+            SchoolAsset.objects.get_or_create(serial_or_isbn="9780198425113", defaults={"name": "Oxford KLB Mathematics Form 1", "category": "TEXTBOOKS", "total_quantity": 120, "available_quantity": 115, "assigned_location": "Cabinet B", "status": "OPERATIONAL"})
+            SchoolAsset.objects.get_or_create(serial_or_isbn="KAB-COMP-LAB-04", defaults={"name": "HP ProDesk Desktop Intel i5", "category": "LAB_EQUIP", "total_quantity": 25, "available_quantity": 24, "assigned_location": "Computer Lab", "status": "OPERATIONAL"})
+            SchoolAsset.objects.get_or_create(serial_or_isbn="KAB-FUR-DSK-88", defaults={"name": "Double Seater Wooden Desks", "category": "FURNITURE", "total_quantity": 60, "available_quantity": 60, "assigned_location": "Form 1 Alpha", "status": "OPERATIONAL"})
+            teacher_profile = StaffProfile.objects.filter(role_designation='TEACHER').first()
+            if teacher_profile:
+                LessonPlan.objects.get_or_create(teacher=teacher_profile, subject=maths_sub, stream=alpha, topic="Linear Inequalities", defaults={"objectives": "Solve simple linear inequalities.", "week_number": 4, "date_planned": datetime.date.today(), "is_approved": True})
+                TimetableSlot.objects.get_or_create(stream=alpha, subject=maths_sub, teacher=teacher_profile, day="MON", defaults={"time_start": "08:20:00", "time_end": "09:00:00"})
+                TimetableSlot.objects.get_or_create(stream=alpha, subject=maths_sub, teacher=teacher_profile, day="WED", defaults={"time_start": "10:40:00", "time_end": "11:20:00"})
+            LearningMaterial.objects.get_or_create(subject=maths_sub, title="Form 1 Revision Kit", defaults={"material_type": "NOTES", "resource_url": "https://drive.google.com/file/d/sample"})
+            return JsonResponse({"status": "success", "message": "Injected data successfully!"})
+        if action == 'purge_all_data':
+            for model in [DisciplineReport, Student, ClassStream, FeeInvoice, FeeReceipt, StaffProfile, HomeworkAssignment, SchoolAnnouncement, SchoolAsset, AssetMaintenanceLog, LessonPlan, LearningMaterial, TimetableSlot]:
+                model.objects.all().delete()
+            return JsonResponse({"status": "success", "message": "Database cleared successfully!"})
+    context = {
+        'total_students': Student.objects.count(),
+        'total_streams': ClassStream.objects.count(),
+        'total_infractions': DisciplineReport.objects.count(),
+        'total_staff': StaffProfile.objects.count(),
+        'raw_students': Student.objects.all().select_related('class_stream')[:10],
+        'raw_staff': StaffProfile.objects.all().select_related('user'),
+    }
+    return render(request, 'finance/developer_debug_console.html', context)
