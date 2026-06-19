@@ -11,21 +11,20 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #0f172a; overflow-x: hidden; }
         .app-container { display: flex; min-height: 100vh; }
-        .sidebar-panel { 
-            width: 260px; 
-            background-color: #0f172a; 
-            border-right: 3px solid #2563eb; 
+        .sidebar-panel {
+            width: 260px;
+            background-color: #0f172a;
+            border-right: 3px solid #2563eb;
             color: #ffffff;
             display: flex;
             flex-direction: column;
             position: fixed;
-            top: 0;
-            left: 0;
+            top: 0; left: 0;
             height: 100vh;
             z-index: 1000;
             box-shadow: 4px 0 24px rgba(15,23,42,0.06);
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
         .main-workspace-content { flex: 1; margin-left: 260px; padding: 2rem; min-width: 0; }
         .sidebar-brand { padding: 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.06); background-color: #0b0f19; position: sticky; top: 0; z-index: 10; }
@@ -44,12 +43,12 @@
         .sidebar-submenu .sidebar-link { padding: 0.55rem 0.7rem; font-size: 0.8rem; color: rgba(255,255,255,0.62) !important; }
         .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); background-color: #0b0f19; position: sticky; bottom: 0; z-index: 10; }
         .sidebar-panel::-webkit-scrollbar { width: 5px; }
-        .sidebar-panel::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
-        .sidebar-panel::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        .sidebar-panel::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        .sidebar-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
         .card-custom { border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); background-color: #ffffff; margin-bottom: 1.5rem; }
         @media print { .no-print { display: none !important; } .main-workspace-content { margin-left: 0 !important; padding: 0; } }
         @media (max-width: 992px) {
-            .sidebar-panel { width: 70px; overflow-y: visible !important; }
+            .sidebar-panel { width: 70px; }
             .sidebar-link span, .sidebar-brand span, .sidebar-footer span, .sidebar-section-toggle .bi-chevron-right { display: none !important; }
             .sidebar-submenu { padding-left: 0; }
             .main-workspace-content { margin-left: 70px; }
@@ -57,108 +56,110 @@
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <aside class="sidebar-panel no-print">
-            <div class="sidebar-brand">
-                <a class="text-decoration-none fw-bold d-flex align-items-center gap-2 text-white" href="{% url 'executive_kpis' %}">
-                    <i class="bi bi-mortarboard-fill text-primary fs-4"></i> 
-                    <span style="letter-spacing: 0.05em; font-size: 0.9rem;">Crescent Heights ACADEMY</span>
+<div class="app-container">
+    <aside class="sidebar-panel no-print">
+        <div class="sidebar-brand">
+            <a class="text-decoration-none fw-bold d-flex align-items-center gap-2 text-white" href="{% url 'executive_kpis' %}">
+                <i class="bi bi-mortarboard-fill text-primary fs-4"></i>
+                <span style="letter-spacing:0.05em;font-size:0.9rem;">Crescent Heights</span>
+            </a>
+        </div>
+
+        <ul class="sidebar-menu-list">
+            <li class="sidebar-menu-item">
+                <a class="sidebar-link" href="{% url 'executive_kpis' %}">
+                    <i class="bi bi-speedometer2 fs-5"></i> <span>Dashboard</span>
                 </a>
-            </div>
-            
-            <ul class="sidebar-menu-list">
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'executive_kpis' %}">
-                        <i class="bi bi-speedometer2 text-white-50 fs-5"></i> <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'bursar_dashboard' %}">
-                        <i class="bi bi-bank text-white-50 fs-5"></i> <span>Finance</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'student_registry' %}">
-                        <i class="bi bi-person-video3 text-white-50 fs-5"></i> <span>Learners</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'attendance_deck' %}">
-                        <i class="bi bi-clock-history text-white-50 fs-5"></i> <span>Attendance</span>
-                    </a>
-                </li>
-
-                <details class="sidebar-section">
-                    <summary class="sidebar-link sidebar-section-toggle">
-                        <i class="bi bi-cash-stack text-white-50 fs-5"></i> <span>Finance Tools</span> <i class="bi bi-chevron-right"></i>
-                    </summary>
-                    <ul class="sidebar-submenu">
-                        <li><a class="sidebar-link" href="{% url 'invoice_list' %}"><span>Invoices</span></a></li>
-                        <li><a class="sidebar-link" href="{% url 'fee_structure' %}"><span>Fee Structure</span></a></li>
-                        <li><a class="sidebar-link" href="{% url 'financial_analytics' %}"><span>Analytics</span></a></li>
-                        <li><a class="sidebar-link" href="{% url 'finance_reports' %}"><span>Reports</span></a></li>
-                        <li><a class="sidebar-link" href="{% url 'generate_bulk_invoices' %}"><span>Bulk Invoices</span></a></li>
-                        <li><a class="sidebar-link" href="{% url 'fee_defaulters_portal' %}"><span>Defaulters SMS</span></a></li>
-                    </ul>
-                </details>
-
-                <details class="sidebar-section">
-                    <summary class="sidebar-link sidebar-section-toggle">
-                        <i class="bi bi-people-fill text-white-50 fs-5"></i> <span>People</span> <i class="bi bi-chevron-right"></i>
-                    </summary>
-                    <ul class="sidebar-submenu">
-                        <li><a class="sidebar-link" href="{% url 'staff_management_matrix' %}"><span>Staff Directory</span></a></li>
-                        <li><a class="sidebar-link" href="{% url 'attendance_history' %}"><span>Attendance Reports</span></a></li>
-                    </ul>
-                </details>
-
-                <details class="sidebar-section">
-                    <summary class="sidebar-link sidebar-section-toggle">
-                        <i class="bi bi-book-half text-white-50 fs-5"></i> <span>Academics</span> <i class="bi bi-chevron-right"></i>
-                    </summary>
-                    <ul class="sidebar-submenu">
-                        <li><a class="sidebar-link" href="{% url 'academic_hub' %}"><span>Academic Hub</span></a></li>
-                        <li><a class="sidebar-link" href="{% url 'marks_entry_portal' %}"><span>Grading Desk</span></a></li>
-                        <li><a class="sidebar-link" href="{% url 'post_homework' %}"><span>Homework</span></a></li>
-                        <li><a class="sidebar-link" href="{% url 'academic_analytics' %}"><span>Analytics</span></a></li>
-                        <li><a class="sidebar-link" href="{% url 'teacher_sms_broadcast' %}"><span>Parent SMS</span></a></li>
-                    </ul>
-                </details>
-
-                <details class="sidebar-section">
-                    <summary class="sidebar-link sidebar-section-toggle">
-                        <i class="bi bi-boxes text-white-50 fs-5"></i> <span>Operations</span> <i class="bi bi-chevron-right"></i>
-                    </summary>
-                    <ul class="sidebar-submenu">
-                        <li><a class="sidebar-link" href="{% url 'grade_promotion' %}"><span>Grade Promotion</span></a></li>
-                        <li><a class="sidebar-link" href="{% url 'inventory_deck' %}"><span>Inventory &amp; Assets</span></a></li>
-                    </ul>
-                </details>
-            </ul>
-            
-            <div class="sidebar-footer">
-                <a href="{% url 'staff_logout' %}" class="sidebar-link p-1 text-danger">
-                    <i class="bi bi-box-arrow-left fs-5 text-danger"></i> <span class="fw-semibold">Sign Out Session</span>
+            </li>
+            <li class="sidebar-menu-item">
+                <a class="sidebar-link" href="{% url 'student_registry' %}">
+                    <i class="bi bi-person-video3 fs-5"></i> <span>Learners</span>
                 </a>
-            </div>
-        </aside>
-        
-        <main class="main-workspace-content">
-            {% if messages %}
-                <div class="row no-print mb-3">
-                    <div class="col-12">
-                        {% for message in messages %}
-                            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}primary{% endif %} alert-dismissible fade show rounded-3 border-0 shadow-sm small" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    </div>
+            </li>
+
+            <details class="sidebar-section">
+                <summary class="sidebar-link sidebar-section-toggle">
+                    <i class="bi bi-cash-stack fs-5"></i> <span>Finance</span> <i class="bi bi-chevron-right"></i>
+                </summary>
+                <ul class="sidebar-submenu">
+                    <li><a class="sidebar-link" href="{% url 'bursar_dashboard' %}"><span>Fee Ledger</span></a></li>
+                        <li><a class="sidebar-link" href="{% url 'finance_data_entry' %}"><span>Data Entry</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'invoice_list' %}"><span>Invoices</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'fee_structure' %}"><span>Fee Structure</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'generate_bulk_invoices' %}"><span>Bulk Invoices</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'fee_defaulters_portal' %}"><span>Defaulters SMS</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'financial_analytics' %}"><span>Analytics</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'finance_reports' %}"><span>Reports</span></a></li>
+                </ul>
+            </details>
+
+            <details class="sidebar-section">
+                <summary class="sidebar-link sidebar-section-toggle">
+                    <i class="bi bi-clock-history fs-5"></i> <span>Attendance</span> <i class="bi bi-chevron-right"></i>
+                </summary>
+                <ul class="sidebar-submenu">
+                    <li><a class="sidebar-link" href="{% url 'attendance_deck' %}"><span>Daily Attendance</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'attendance_history' %}"><span>Attendance Reports</span></a></li>
+                </ul>
+            </details>
+
+            <details class="sidebar-section">
+                <summary class="sidebar-link sidebar-section-toggle">
+                    <i class="bi bi-people-fill fs-5"></i> <span>Staff</span> <i class="bi bi-chevron-right"></i>
+                </summary>
+                <ul class="sidebar-submenu">
+                    <li><a class="sidebar-link" href="{% url 'staff_management_matrix' %}"><span>Staff Directory</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'leave_management' %}"><span>Leave Management</span></a></li>
+                </ul>
+            </details>
+
+            <details class="sidebar-section">
+                <summary class="sidebar-link sidebar-section-toggle">
+                    <i class="bi bi-book-half fs-5"></i> <span>Academics</span> <i class="bi bi-chevron-right"></i>
+                </summary>
+                <ul class="sidebar-submenu">
+                    <li><a class="sidebar-link" href="{% url 'academic_hub' %}"><span>Academic Hub</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'marks_entry_portal' %}"><span>Grading Desk</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'post_homework' %}"><span>Homework</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'academic_analytics' %}"><span>Analytics</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'teacher_sms_broadcast' %}"><span>Parent SMS</span></a></li>
+                </ul>
+            </details>
+
+            <details class="sidebar-section">
+                <summary class="sidebar-link sidebar-section-toggle">
+                    <i class="bi bi-boxes fs-5"></i> <span>Operations</span> <i class="bi bi-chevron-right"></i>
+                </summary>
+                <ul class="sidebar-submenu">
+                    <li><a class="sidebar-link" href="{% url 'grade_promotion' %}"><span>Grade Promotion</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'inventory_deck' %}"><span>Inventory & Assets</span></a></li>
+                </ul>
+            </details>
+        </ul>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'staff_logout' %}" class="sidebar-link p-1 text-danger">
+                <i class="bi bi-box-arrow-left fs-5 text-danger"></i> <span class="fw-semibold">Sign Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-workspace-content">
+        {% if messages %}
+        <div class="row no-print mb-3">
+            <div class="col-12">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}primary{% endif %} alert-dismissible fade show rounded-3 border-0 shadow-sm small" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
-            {% endif %}
-            {% block content %}{% endblock %}
-        </main>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

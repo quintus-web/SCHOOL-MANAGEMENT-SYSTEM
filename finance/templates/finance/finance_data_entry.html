@@ -1,0 +1,181 @@
+{% extends 'finance/base.html' %}
+{% block title %}Finance Data Entry - Crescent Heights Academy{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Finance Data Entry</h3>
+        <p class="text-muted small text-uppercase fw-semibold mb-0">Enter existing balances and past payments from paper records</p>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- LEFT: Student Search -->
+    <div class="col-md-4">
+        <div class="card card-custom p-4">
+            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-search me-2 text-primary"></i>Find Student</h6>
+            <form method="GET" action="">
+                <div class="input-group mb-3">
+                    <input type="text" name="q" class="form-control" placeholder="Name or Adm No..." value="{{ search }}" autofocus>
+                    <button type="submit" class="btn btn-dark px-3"><i class="bi bi-search"></i></button>
+                </div>
+                {% if search and not selected_student %}
+                <a href="{% url 'finance_data_entry' %}" class="btn btn-sm btn-outline-secondary w-100 mb-3">Clear Search</a>
+                {% endif %}
+            </form>
+
+            {% if students %}
+            <div class="list-group" style="max-height:420px; overflow-y:auto;">
+                {% for s in students %}
+                <a href="?student_id={{ s.id }}{% if search %}&q={{ search }}{% endif %}"
+                   class="list-group-item list-group-item-action {% if selected_student.id == s.id %}active{% endif %} py-2">
+                    <div class="fw-semibold" style="font-size:0.88rem;">{{ s.first_name }} {{ s.last_name }}</div>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <code style="font-size:0.75rem;">{{ s.admission_number }}</code>
+                        <span class="badge {% if s.current_balance > 0 %}bg-danger{% else %}bg-success{% endif %} bg-opacity-10 {% if s.current_balance > 0 %}text-danger{% else %}text-success{% endif %}" style="font-size:0.7rem;">
+                            KES {{ s.current_balance|floatformat:0 }}
+                        </span>
+                    </div>
+                    <small class="text-muted">{{ s.class_stream.name|default:"Unassigned" }}</small>
+                </a>
+                {% endfor %}
+            </div>
+            {% elif search %}
+            <p class="text-muted small text-center py-3">No students found for "{{ search }}"</p>
+            {% else %}
+            <p class="text-muted small text-center py-3">Search to find a student</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- RIGHT: Entry Forms -->
+    <div class="col-md-8">
+        {% if selected_student %}
+
+        <!-- Student Header -->
+        <div class="card card-custom p-4 mb-4 border-start border-4 border-primary">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h5 class="fw-bold text-dark mb-1">{{ selected_student.first_name }} {{ selected_student.last_name }}</h5>
+                    <span class="text-muted small me-3"><i class="bi bi-person-badge me-1"></i>{{ selected_student.admission_number }}</span>
+                    <span class="text-muted small"><i class="bi bi-mortarboard me-1"></i>{{ selected_student.class_stream.name|default:"Unassigned" }}</span>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted d-block">Current Balance</small>
+                    <h4 class="fw-bold mb-0 {% if selected_student.current_balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                        KES {{ selected_student.current_balance|floatformat:2 }}
+                    </h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Set Balance -->
+            <div class="col-md-6">
+                <div class="card card-custom p-4 h-100">
+                    <h6 class="fw-bold text-dark mb-1"><i class="bi bi-pencil-square me-2 text-warning"></i>Set Outstanding Balance</h6>
+                    <p class="text-muted small mb-3">Use this to record how much the student owes from paper records.</p>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="student_id" value="{{ selected_student.id }}">
+                        <input type="hidden" name="action" value="set_balance">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size:0.72rem;">Balance (KES)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white fw-bold">KES</span>
+                                <input type="number" step="0.01" name="balance" class="form-control fw-bold text-danger"
+                                       value="{{ selected_student.current_balance|floatformat:2 }}" min="0" required>
+                            </div>
+                            <small class="text-muted d-block mt-1">This directly overwrites the current balance.</small>
+                        </div>
+                        <button type="submit" class="btn btn-warning fw-bold w-100">
+                            <i class="bi bi-check-circle me-1"></i> Update Balance
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Record Past Payment -->
+            <div class="col-md-6">
+                <div class="card card-custom p-4 h-100">
+                    <h6 class="fw-bold text-dark mb-1"><i class="bi bi-cash-coin me-2 text-success"></i>Record Past Payment</h6>
+                    <p class="text-muted small mb-3">Log a payment already made before this system was set up.</p>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="student_id" value="{{ selected_student.id }}">
+                        <input type="hidden" name="action" value="add_payment">
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size:0.72rem;">Amount (KES)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white fw-bold">KES</span>
+                                <input type="number" step="0.01" name="amount" class="form-control fw-bold text-success" placeholder="0.00" min="1" required>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size:0.72rem;">Date Paid</label>
+                            <input type="date" name="pay_date" class="form-control" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size:0.72rem;">Channel</label>
+                            <select name="channel" class="form-select">
+                                <option value="CASH">Cash</option>
+                                <option value="MPESA">M-Pesa</option>
+                                <option value="BANK">Bank Transfer</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size:0.72rem;">Note / Reference</label>
+                            <input type="text" name="description" class="form-control" placeholder="e.g. Term 1 payment, receipt no...">
+                        </div>
+                        <button type="submit" class="btn btn-success fw-bold w-100">
+                            <i class="bi bi-plus-circle me-1"></i> Add Payment
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        {% if past_payments %}
+        <div class="card card-custom mt-4">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Payment History — {{ selected_student.first_name }} {{ selected_student.last_name }}</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Reference</th>
+                            <th>Channel</th>
+                            <th>Note</th>
+                            <th class="text-end">Amount (KES)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in past_payments %}
+                        <tr class="border-bottom">
+                            <td class="font-monospace text-muted">{{ r.date_paid|date:"Y-m-d" }}</td>
+                            <td><code class="small">{{ r.reference_code }}</code></td>
+                            <td><span class="badge bg-light text-dark border">{{ r.get_payment_channel_display }}</span></td>
+                            <td class="text-muted">{{ r.description|default:"—" }}</td>
+                            <td class="text-end fw-bold text-success font-monospace">{{ r.amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="card card-custom p-5 text-center">
+            <i class="bi bi-person-lines-fill text-muted mb-3" style="font-size:3rem;"></i>
+            <h5 class="fw-bold text-dark mb-1">No Student Selected</h5>
+            <p class="text-muted small mb-0">Search for a student on the left to begin entering their financial records.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

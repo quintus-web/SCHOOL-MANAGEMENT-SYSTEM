@@ -26,13 +26,13 @@ def stage_demo_environment():
     ClassStream.objects.all().delete()
     Teacher.objects.all().delete()
 
-    print("👥 Seeding professional Kabiero Academy faculty profiles...")
+    print("👥 Seeding professional CRESCENT HEIGHTS ACADEMY faculty profiles...")
     # 2. Seed Teacher Profiles
     teacher_one = Teacher.objects.create(
         tsc_number="TSC-889922",
         first_name="Ezekiel",
         last_name="Mutua",
-        email="ezekiel.mutua@kabieroacademy.ac.ke",
+        email="ezekiel.mutua@crescentheights.ac.ke",
         phone_number="+254711002233",
         is_class_teacher=True
     )
@@ -41,7 +41,7 @@ def stage_demo_environment():
         tsc_number="TSC-114455",
         first_name="Sarah",
         last_name="Omwamba",
-        email="sarah.omwamba@kabieroacademy.ac.ke",
+        email="sarah.omwamba@crescentheights.ac.ke",
         phone_number="+254722998877",
         is_class_teacher=True
     )

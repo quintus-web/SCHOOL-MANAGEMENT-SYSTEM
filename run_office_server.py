@@ -24,7 +24,7 @@ if __name__ == "__main__":
     port = 8000
     
     print("=" * 60)
-    print("        KABIERO ACADEMY - PRODUCTION OFFICE SERVER")
+    print("        CRESCENT HEIGHTS ACADEMY - PRODUCTION OFFICE SERVER")
     print("=" * 60)
     print(f" Status:       ACTIVE & RUNNING")
     print(f" Engine:       Waitress WSGI Production Gateway")

@@ -18,6 +18,7 @@ urlpatterns = [
     path('registry/faculty/', views.faculty_directory, name='faculty_directory'),
     
     # ── BURSAR ACCOUNTING ENGINE & LEDGERS ──
+    path('treasury/data-entry/', views.finance_data_entry, name='finance_data_entry'),
     path('treasury/bulk-balance-import/', views.bulk_balance_import, name='bulk_balance_import'),
     path('treasury/ledger/', views.bursar_dashboard, name='bursar_dashboard'),
     path('treasury/fee-structure/', views.fee_structure, name='fee_structure'),

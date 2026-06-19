@@ -686,7 +686,7 @@ def teacher_sms_broadcast(request):
         
         username = request.POST.get("username", "").strip()
         api_key = request.POST.get("api_key", "").strip()
-        sender_id = request.POST.get("sender_id", "KABIERO").strip()
+        sender_id = request.POST.get("sender_id", "CRESCENT").strip()
         
         if not username or not api_key:
             messages.error(request, "Africa's Talking credentials required in session settings.")
@@ -1743,6 +1743,98 @@ def commit_bulk_attendance(request):
     if request.method == 'POST':
         messages.success(request, "Attendance records saved successfully.")
     return redirect('attendance_deck')
+
+
+@login_required
+def finance_data_entry(request):
+    """Manual data entry page for paper records — set balance and log past payments."""
+    students = Student.objects.filter(is_active=True).select_related('class_stream').order_by('first_name')
+    search = request.GET.get('q', '').strip()
+    selected_student = None
+    student_id = request.GET.get('student_id') or request.POST.get('student_id')
+
+    if search:
+        students = students.filter(
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search) |
+            Q(admission_number__icontains=search)
+        )
+
+    if student_id:
+        selected_student = Student.objects.filter(id=student_id).select_related('class_stream').first()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'set_balance' and selected_student:
+            try:
+                new_balance = Decimal(request.POST.get('balance', '0'))
+                selected_student.current_balance = new_balance
+                selected_student.save()
+                messages.success(request, f"Balance for {selected_student.first_name} {selected_student.last_name} set to KES {new_balance:,.2f}")
+            except Exception:
+                messages.error(request, 'Invalid balance amount.')
+            return redirect(f"{request.path}?student_id={student_id}")
+
+        if action == 'add_payment' and selected_student:
+            try:
+                amount = Decimal(request.POST.get('amount', '0'))
+                channel = request.POST.get('channel', 'CASH')
+                description = request.POST.get('description', '').strip() or 'Past Payment (Paper Record)'
+                pay_date = request.POST.get('pay_date', '')
+
+                if amount <= 0:
+                    messages.error(request, 'Amount must be greater than zero.')
+                    return redirect(f"{request.path}?student_id={student_id}")
+
+                invoice = FeeInvoice.objects.filter(student=selected_student).order_by('date_issued').first()
+                if not invoice:
+                    fee_entry = FeeStructure.objects.filter(level=selected_student.class_stream.name).first() if selected_student.class_stream else None
+                    invoice = FeeInvoice.objects.create(
+                        student=selected_student,
+                        title=f"{selected_student.class_stream.name if selected_student.class_stream else 'General'} Fees 2026",
+                        amount=selected_student.current_balance or (fee_entry.amount if fee_entry else Decimal('0.00')),
+                        description='Auto-generated for paper record entry'
+                    )
+
+                ref = f"PAPER-{timezone.now().strftime('%Y%m%d%H%M%S')}-{selected_student.id}"
+                receipt = FeeReceipt.objects.create(
+                    student=selected_student,
+                    invoice=invoice,
+                    amount=amount,
+                    status='COMPLETED',
+                    payment_channel=channel,
+                    description=description,
+                    reference_code=ref
+                )
+
+                if pay_date:
+                    try:
+                        from django.utils.dateparse import parse_datetime, parse_date
+                        import datetime
+                        d = parse_date(pay_date)
+                        if d:
+                            receipt.date_paid = timezone.make_aware(datetime.datetime.combine(d, datetime.time.min))
+                            receipt.save()
+                    except Exception:
+                        pass
+
+                selected_student.current_balance = max(Decimal('0.00'), Decimal(selected_student.current_balance) - amount)
+                selected_student.save()
+                messages.success(request, f"Payment of KES {amount:,.2f} recorded for {selected_student.first_name} {selected_student.last_name}")
+            except Exception as e:
+                messages.error(request, f'Error recording payment: {str(e)}')
+            return redirect(f"{request.path}?student_id={student_id}")
+
+    past_payments = FeeReceipt.objects.filter(student=selected_student).order_by('-date_paid') if selected_student else []
+
+    return render(request, 'finance/finance_data_entry.html', {
+        'students': students,
+        'selected_student': selected_student,
+        'search': search,
+        'past_payments': past_payments,
+        'student_id': student_id,
+    })
 
 
 @login_required

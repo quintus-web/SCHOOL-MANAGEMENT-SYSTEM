@@ -10,8 +10,11 @@
             <p class="text-muted small text-uppercase fw-semibold mb-0">Finance, academic, attendance, operations, and asset health intelligence</p>
         </div>
         <div class="d-flex gap-2 no-print">
-            <button onclick="window.print()" class="btn btn-dark btn-sm rounded-3 px-3 d-inline-flex align-items-center gap-1 fw-semibold">
-                <i class="bi bi-printer"></i> Export Summary
+            <a href="{% url 'finance_reports' %}" class="btn btn-outline-dark btn-sm rounded-3 px-3 fw-semibold">
+                <i class="bi bi-file-earmark-bar-graph me-1"></i> Reports
+            </a>
+            <button onclick="window.print()" class="btn btn-dark btn-sm rounded-3 px-3 fw-semibold">
+                <i class="bi bi-printer me-1"></i> Print
             </button>
         </div>
     </div>
@@ -414,127 +417,4 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- EXECUTIVE REPORT EXPORT SECTIONS                              -->
-<!-- ═══════════════════════════════════════════════════════════════ -->
-
-<!-- ── FINANCE REPORT ── -->
-<div class="row g-4 mb-4">
-    <div class="col-lg-12">
-        <div class="card card-custom border-0 shadow-sm bg-white">
-            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-cash-stack me-2 text-success"></i>Finance Report — Fee Collection Summary</h5>
-                <a href="{% url 'export_report_csv' 'collection' %}?year={{ generation_date|date:'Y' }}" class="btn btn-outline-success btn-sm fw-semibold px-3">
-                    <i class="bi bi-download me-1"></i> Download Finance CSV
-                </a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 small">
-                    <thead class="table-light">
-                        <tr><th>Adm No</th><th>Student Name</th><th>Stream</th><th class="text-end">Invoiced (KES)</th><th class="text-end">Collected (KES)</th><th class="text-end">Balance (KES)</th><th class="text-center">Rate</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for row in finance_report_data %}
-                        <tr class="border-bottom">
-                            <td><code class="fw-bold font-monospace small text-secondary">{{ row.adm }}</code></td>
-                            <td class="fw-semibold text-dark">{{ row.name }}</td>
-                            <td><span class="badge bg-light text-dark border">{{ row.stream }}</span></td>
-                            <td class="text-end font-monospace small">{{ row.invoiced|floatformat:0 }}</td>
-                            <td class="text-end font-monospace small text-success">{{ row.collected|floatformat:0 }}</td>
-                            <td class="text-end font-monospace small text-danger">{{ row.balance|floatformat:0 }}</td>
-                            <td class="text-center">
-                                <span class="badge {% if row.rate >= 80 %}bg-success{% elif row.rate >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %} rounded-pill px-2">
-                                    {{ row.rate }}%
-                                </span>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="7" class="text-center text-muted py-4">No finance records available.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ── ATTENDANCE REPORT ── -->
-<div class="row g-4 mb-4">
-    <div class="col-lg-12">
-        <div class="card card-custom border-0 shadow-sm bg-white">
-            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-calendar-check me-2 text-primary"></i>Attendance Report — Today's Roll-Call ({{ generation_date|date:"M d, Y" }})</h5>
-                <a href="{% url 'export_report_csv' 'attendance' %}?date_from={{ generation_date|date:'Y-m-d' }}&date_to={{ generation_date|date:'Y-m-d' }}" class="btn btn-outline-success btn-sm fw-semibold px-3">
-                    <i class="bi bi-download me-1"></i> Download Attendance CSV
-                </a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 small">
-                    <thead class="table-light">
-                        <tr><th>Adm No</th><th>Student Name</th><th>Stream</th><th class="text-center">Status</th><th class="text-center">Present</th><th>Remarks</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for row in attendance_report_data %}
-                        <tr class="border-bottom {% if row.present == 'No' %}table-danger{% endif %}">
-                            <td><code class="fw-bold font-monospace small text-secondary">{{ row.adm }}</code></td>
-                            <td class="fw-semibold text-dark">{{ row.name }}</td>
-                            <td><span class="badge bg-light text-dark border">{{ row.stream }}</span></td>
-                            <td class="text-center">
-                                {% if row.present == 'Yes' %}
-                                    <span class="badge bg-success rounded-pill px-3">Present</span>
-                                {% else %}
-                                    <span class="badge bg-danger rounded-pill px-3">Absent</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-center">{{ row.present }}</td>
-                            <td class="small text-muted">{{ row.remarks|default:"—" }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="6" class="text-center text-muted py-4">No attendance records for today.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ── GRADING REPORT ── -->
-<div class="row g-4 mb-4">
-    <div class="col-lg-12">
-        <div class="card card-custom border-0 shadow-sm bg-white">
-            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-journal-bookmark-fill me-2 text-info"></i>Grading Report — Exam Records</h5>
-                <a href="{% url 'export_report_csv' 'grading' %}?year={{ generation_date|date:'Y' }}" class="btn btn-outline-success btn-sm fw-semibold px-3">
-                    <i class="bi bi-download me-1"></i> Download Grading CSV
-                </a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 small">
-                    <thead class="table-light">
-                        <tr><th>Adm No</th><th>Student Name</th><th>Stream</th><th>Subject</th><th>Term</th><th>Year</th><th class="text-center">CAT 1</th><th class="text-center">CAT 2</th><th class="text-center">Final Exam</th><th class="text-end">Total Marks</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for row in grading_report_data %}
-                        <tr class="border-bottom">
-                            <td><code class="fw-bold font-monospace small text-secondary">{{ row.adm }}</code></td>
-                            <td class="fw-semibold text-dark">{{ row.name }}</td>
-                            <td><span class="badge bg-light text-dark border">{{ row.stream }}</span></td>
-                            <td>{{ row.subject }}</td>
-                            <td>{{ row.term }}</td>
-                            <td>{{ row.year }}</td>
-                            <td class="text-center font-monospace">{{ row.cat1 }}</td>
-                            <td class="text-center font-monospace">{{ row.cat2 }}</td>
-                            <td class="text-center font-monospace">{{ row.exam }}</td>
-                            <td class="text-end fw-bold text-primary font-monospace">{{ row.total }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="10" class="text-center text-muted py-4">No exam records available.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
