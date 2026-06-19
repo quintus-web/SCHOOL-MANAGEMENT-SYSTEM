@@ -12,7 +12,7 @@ if os.path.exists(env_file):
     environ.Env.read_env(env_file)
 
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-ypx*^vy2-%wj23lotuzn-ngd!jluip-*)^=vhq#%4dzsojhm2v')
-DEBUG = env.bool('DEBUG', default=False)
+DEBUG = env.bool('DEBUG', default=True)
 
 def _csv_env(name, default=''):
     return [item.strip() for item in os.environ.get(name, default).split(',') if item.strip()]
