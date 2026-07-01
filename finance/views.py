@@ -1636,42 +1636,58 @@ def parent_portal_gateway(request):
 
 @login_required
 def global_attendance_control_deck(request):
-    """Calculates overall metrics charts and triggers localized absence warning sheets"""
     today = datetime.date.today()
 
-    students = Student.objects.filter(is_active=True)
-    staff_members = StaffProfile.objects.all()
-
-    for s in students:
-        StudentAttendanceRecord.objects.get_or_create(student=s, date=today, defaults={'status': 'PRESENT', 'is_present': True})
-    for st in staff_members:
-        TeacherAttendanceRecord.objects.get_or_create(staff=st, date=today, defaults={'status': 'PRESENT', 'time_in': datetime.time(7, 45)})
-
+    # ── Handle toggle POST first, before seeding ──
     if request.method == 'POST' and 'toggle_attendance' in request.POST:
-        try:
-            record_id = request.POST.get('record_id')
-            record_type = request.POST.get('type')
-            new_status = request.POST.get('new_status')
+        record_id = request.POST.get('record_id', '').strip()
+        record_type = request.POST.get('type', '').strip()
+        new_status = request.POST.get('new_status', '').strip()
 
-            if record_type == 'STUDENT':
+        if record_type == 'STUDENT' and new_status in ('PRESENT', 'ABSENT'):
+            try:
                 rec = StudentAttendanceRecord.objects.get(id=record_id, date=today)
                 rec.status = new_status
                 rec.is_present = (new_status == 'PRESENT')
                 rec.save(update_fields=['status', 'is_present'])
                 if new_status == 'ABSENT':
-                    messages.warning(request, f"SMS alert staged for parent of {rec.student.first_name} ({rec.student.parent_phone})")
-            elif record_type == 'TEACHER':
+                    messages.warning(request, f"{rec.student.first_name} marked absent.")
+                else:
+                    messages.success(request, f"{rec.student.first_name} marked present.")
+            except StudentAttendanceRecord.DoesNotExist:
+                messages.error(request, "Student record not found. Please refresh.")
+
+        elif record_type == 'TEACHER' and new_status in ('PRESENT', 'ABSENT'):
+            try:
                 rec = TeacherAttendanceRecord.objects.get(id=record_id, date=today)
                 rec.status = new_status
                 rec.save(update_fields=['status'])
-            return redirect('attendance_deck')
-        except (StudentAttendanceRecord.DoesNotExist, TeacherAttendanceRecord.DoesNotExist):
-            messages.error(request, "Record not found. Please refresh and try again.")
-    
+            except TeacherAttendanceRecord.DoesNotExist:
+                messages.error(request, "Staff record not found. Please refresh.")
+
+        return redirect('attendance_deck')
+
+    # ── Seed today's records only for students/staff missing one ──
+    existing_student_ids = set(
+        StudentAttendanceRecord.objects.filter(date=today).values_list('student_id', flat=True)
+    )
+    StudentAttendanceRecord.objects.bulk_create([
+        StudentAttendanceRecord(student=s, date=today, status='PRESENT', is_present=True)
+        for s in Student.objects.filter(is_active=True).exclude(id__in=existing_student_ids)
+    ], ignore_conflicts=True)
+
+    existing_staff_ids = set(
+        TeacherAttendanceRecord.objects.filter(date=today).values_list('staff_id', flat=True)
+    )
+    TeacherAttendanceRecord.objects.bulk_create([
+        TeacherAttendanceRecord(staff=st, date=today, status='PRESENT', time_in=datetime.time(7, 45))
+        for st in StaffProfile.objects.exclude(id__in=existing_staff_ids)
+    ], ignore_conflicts=True)
+
     context = {
         'today': today,
-        'student_attendance': StudentAttendanceRecord.objects.filter(date=today).select_related('student__class_stream'),
-        'teacher_attendance': TeacherAttendanceRecord.objects.filter(date=today).select_related('staff'),
+        'student_attendance': StudentAttendanceRecord.objects.filter(date=today).select_related('student__class_stream').order_by('student__first_name'),
+        'teacher_attendance': TeacherAttendanceRecord.objects.filter(date=today).select_related('staff__user').order_by('staff__employee_number'),
         'total_present_students': StudentAttendanceRecord.objects.filter(date=today, status='PRESENT').count(),
         'total_absent_students': StudentAttendanceRecord.objects.filter(date=today, status='ABSENT').count(),
         'total_present_teachers': TeacherAttendanceRecord.objects.filter(date=today, status='PRESENT').count(),

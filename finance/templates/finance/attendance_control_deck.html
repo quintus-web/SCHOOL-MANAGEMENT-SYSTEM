@@ -3,6 +3,15 @@
 {% block title %}Daily Attendance - Crescent Heights Academy{% endblock %}
 
 {% block content %}
+<style>
+    .att-row-absent  { background-color: #fff5f5 !important; border-left: 4px solid #dc3545 !important; }
+    .att-row-present { background-color: #f0fff4 !important; border-left: 4px solid #198754 !important; }
+    .att-card-absent  { background-color: #fff5f5 !important; border-left: 4px solid #dc3545 !important; }
+    .att-card-present { background-color: #f0fff4 !important; border-left: 4px solid #198754 !important; }
+    .btn-mark { min-width: 90px; font-size: 0.82rem; font-weight: 600; }
+    @media (max-width: 768px) { .btn-mark { min-width: 0; flex: 1; } }
+</style>
+
 <div class="container-fluid p-0">
 
     <!-- Header -->
@@ -15,37 +24,22 @@
 
     <!-- Stat Cards -->
     <div class="row g-2 mb-3">
-        <div class="col-4 stat-col">
-            <div class="card border-0 shadow-sm p-2 p-md-3 text-center text-md-start">
-                <div class="d-flex align-items-center gap-2 justify-content-center justify-content-md-start">
-                    <div class="p-2 bg-success bg-opacity-10 text-success rounded-3 d-none d-md-flex"><i class="bi bi-person-check-fill fs-4"></i></div>
-                    <div>
-                        <div class="text-muted fw-bold" style="font-size:0.65rem;">PRESENT</div>
-                        <h4 class="fw-bold text-success mb-0">{{ total_present_students }}</h4>
-                    </div>
-                </div>
+        <div class="col-4">
+            <div class="card border-0 shadow-sm p-2 p-md-3 text-center" style="border-top:3px solid #198754;">
+                <div class="fw-bold text-muted" style="font-size:0.65rem;">PRESENT</div>
+                <h3 class="fw-bold text-success mb-0">{{ total_present_students }}</h3>
             </div>
         </div>
-        <div class="col-4 stat-col">
-            <div class="card border-0 shadow-sm p-2 p-md-3 text-center text-md-start">
-                <div class="d-flex align-items-center gap-2 justify-content-center justify-content-md-start">
-                    <div class="p-2 bg-danger bg-opacity-10 text-danger rounded-3 d-none d-md-flex"><i class="bi bi-envelope-exclamation-fill fs-4"></i></div>
-                    <div>
-                        <div class="text-muted fw-bold" style="font-size:0.65rem;">ABSENT</div>
-                        <h4 class="fw-bold text-danger mb-0">{{ total_absent_students }}</h4>
-                    </div>
-                </div>
+        <div class="col-4">
+            <div class="card border-0 shadow-sm p-2 p-md-3 text-center" style="border-top:3px solid #dc3545;">
+                <div class="fw-bold text-muted" style="font-size:0.65rem;">ABSENT</div>
+                <h3 class="fw-bold text-danger mb-0">{{ total_absent_students }}</h3>
             </div>
         </div>
-        <div class="col-4 stat-col">
-            <div class="card border-0 shadow-sm p-2 p-md-3 text-center text-md-start">
-                <div class="d-flex align-items-center gap-2 justify-content-center justify-content-md-start">
-                    <div class="p-2 bg-primary bg-opacity-10 text-primary rounded-3 d-none d-md-flex"><i class="bi bi-shield-check fs-4"></i></div>
-                    <div>
-                        <div class="text-muted fw-bold" style="font-size:0.65rem;">STAFF IN</div>
-                        <h4 class="fw-bold text-primary mb-0">{{ total_present_teachers }}</h4>
-                    </div>
-                </div>
+        <div class="col-4">
+            <div class="card border-0 shadow-sm p-2 p-md-3 text-center" style="border-top:3px solid #0d6efd;">
+                <div class="fw-bold text-muted" style="font-size:0.65rem;">STAFF IN</div>
+                <h3 class="fw-bold text-primary mb-0">{{ total_present_teachers }}</h3>
             </div>
         </div>
     </div>
@@ -56,7 +50,9 @@
         <div class="col-xl-7">
             <div class="card card-custom border-0 bg-white shadow-sm p-3 p-md-4">
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-mortarboard me-2 text-warning"></i>Student Registry</h5>
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-mortarboard me-2 text-warning"></i>Students
+                        <span class="badge bg-secondary ms-2" style="font-size:0.7rem;">{{ student_attendance|length }} total</span>
+                    </h5>
                     <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 fw-semibold" style="font-size:0.7rem;">
                         <span class="spinner-grow spinner-grow-sm me-1 align-middle" style="width:7px;height:7px;"></span>LIVE
                     </span>
@@ -64,42 +60,40 @@
 
                 <!-- DESKTOP TABLE -->
                 <div class="table-responsive desktop-table">
-                    <table class="table table-hover align-middle mb-0" style="font-size:0.88rem;">
+                    <table class="table align-middle mb-0" style="font-size:0.88rem;">
                         <thead class="table-light" style="font-size:0.73rem;font-weight:700;">
                             <tr>
-                                <th>Adm No.</th>
                                 <th>Name</th>
                                 <th>Stream</th>
-                                <th>Status</th>
-                                <th class="text-end">Mark</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Mark Attendance</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for record in student_attendance %}
-                            <tr class="border-bottom">
-                                <td><code class="fw-bold text-primary">{{ record.student.admission_number }}</code></td>
+                            <tr class="border-bottom {% if record.status == 'ABSENT' %}att-row-absent{% else %}att-row-present{% endif %}">
                                 <td>
                                     <div class="fw-semibold">{{ record.student.first_name }} {{ record.student.last_name }}</div>
                                     <small class="text-muted" style="font-size:0.72rem;"><i class="bi bi-telephone me-1"></i>{{ record.student.parent_phone }}</small>
                                 </td>
                                 <td><span class="badge bg-light text-dark border">{{ record.student.class_stream.name|default:"—" }}</span></td>
-                                <td>
+                                <td class="text-center">
                                     {% if record.status == 'PRESENT' %}
-                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 fw-bold"><i class="bi bi-fingerprint me-1"></i>Present</span>
+                                        <span class="badge bg-success fw-bold px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i>Present</span>
                                     {% else %}
-                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Absent</span>
+                                        <span class="badge bg-danger fw-bold px-3 py-2"><i class="bi bi-x-circle-fill me-1"></i>Absent</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-end">
-                                    <div class="d-flex gap-1 justify-content-end">
+                                <td class="text-center">
+                                    <div class="d-flex gap-2 justify-content-center">
                                         <form method="POST" class="m-0">
                                             {% csrf_token %}
                                             <input type="hidden" name="record_id" value="{{ record.id }}">
                                             <input type="hidden" name="type" value="STUDENT">
                                             <input type="hidden" name="toggle_attendance" value="1">
                                             <input type="hidden" name="new_status" value="PRESENT">
-                                            <button type="submit" class="btn btn-sm fw-semibold {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}" style="font-size:0.78rem;">
-                                                <i class="bi bi-person-check me-1"></i>Present
+                                            <button type="submit" class="btn btn-mark {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}">
+                                                <i class="bi bi-check-lg me-1"></i>Present
                                             </button>
                                         </form>
                                         <form method="POST" class="m-0">
@@ -108,15 +102,15 @@
                                             <input type="hidden" name="type" value="STUDENT">
                                             <input type="hidden" name="toggle_attendance" value="1">
                                             <input type="hidden" name="new_status" value="ABSENT">
-                                            <button type="submit" class="btn btn-sm fw-medium {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}" style="font-size:0.78rem;">
-                                                <i class="bi bi-person-x me-1"></i>Absent
+                                            <button type="submit" class="btn btn-mark {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                                                <i class="bi bi-x-lg me-1"></i>Absent
                                             </button>
                                         </form>
                                     </div>
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="5" class="text-center text-muted py-4">No attendance records for today.</td></tr>
+                            <tr><td colspan="4" class="text-center text-muted py-4">No attendance records for today.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -125,21 +119,18 @@
                 <!-- MOBILE CARD LIST -->
                 <div class="mobile-card-list" style="display:none;">
                     {% for record in student_attendance %}
-                    <div class="border rounded-3 p-3 mb-2 bg-white">
+                    <div class="rounded-3 p-3 mb-2 border {% if record.status == 'ABSENT' %}att-card-absent{% else %}att-card-present{% endif %}">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
-                                <div class="fw-bold text-dark" style="font-size:0.92rem;">{{ record.student.first_name }} {{ record.student.last_name }}</div>
-                                <code class="text-primary" style="font-size:0.75rem;">{{ record.student.admission_number }}</code>
+                                <div class="fw-bold text-dark" style="font-size:0.95rem;">{{ record.student.first_name }} {{ record.student.last_name }}</div>
                                 <div class="text-muted" style="font-size:0.75rem;"><i class="bi bi-telephone me-1"></i>{{ record.student.parent_phone }}</div>
+                                <span class="badge bg-light text-dark border mt-1" style="font-size:0.7rem;">{{ record.student.class_stream.name|default:"—" }}</span>
                             </div>
-                            <div class="text-end">
-                                <span class="badge bg-light text-dark border mb-1 d-block" style="font-size:0.7rem;">{{ record.student.class_stream.name|default:"—" }}</span>
-                                {% if record.status == 'PRESENT' %}
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 fw-bold" style="font-size:0.72rem;"><i class="bi bi-fingerprint me-1"></i>Present</span>
-                                {% else %}
-                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 fw-bold" style="font-size:0.72rem;"><i class="bi bi-exclamation-triangle-fill me-1"></i>Absent</span>
-                                {% endif %}
-                            </div>
+                            {% if record.status == 'PRESENT' %}
+                                <span class="badge bg-success fw-bold px-2 py-2"><i class="bi bi-check-circle-fill me-1"></i>Present</span>
+                            {% else %}
+                                <span class="badge bg-danger fw-bold px-2 py-2"><i class="bi bi-x-circle-fill me-1"></i>Absent</span>
+                            {% endif %}
                         </div>
                         <div class="d-flex gap-2">
                             <form method="POST" class="m-0 flex-fill">
@@ -148,8 +139,8 @@
                                 <input type="hidden" name="type" value="STUDENT">
                                 <input type="hidden" name="toggle_attendance" value="1">
                                 <input type="hidden" name="new_status" value="PRESENT">
-                                <button type="submit" class="btn btn-sm fw-semibold w-100 {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}" style="font-size:0.82rem;">
-                                    <i class="bi bi-person-check me-1"></i>Present
+                                <button type="submit" class="btn btn-mark w-100 {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}">
+                                    <i class="bi bi-check-lg me-1"></i>Present
                                 </button>
                             </form>
                             <form method="POST" class="m-0 flex-fill">
@@ -158,8 +149,8 @@
                                 <input type="hidden" name="type" value="STUDENT">
                                 <input type="hidden" name="toggle_attendance" value="1">
                                 <input type="hidden" name="new_status" value="ABSENT">
-                                <button type="submit" class="btn btn-sm fw-medium w-100 {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}" style="font-size:0.82rem;">
-                                    <i class="bi bi-person-x me-1"></i>Absent
+                                <button type="submit" class="btn btn-mark w-100 {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                                    <i class="bi bi-x-lg me-1"></i>Absent
                                 </button>
                             </form>
                         </div>
@@ -176,45 +167,42 @@
         <div class="col-xl-5">
             <div class="card card-custom border-0 bg-white shadow-sm p-3 p-md-4">
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-briefcase me-2 text-success"></i>Staff Registry</h5>
-                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-20 fw-semibold" style="font-size:0.7rem;">QR GATEWAY</span>
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-briefcase me-2 text-primary"></i>Staff</h5>
                 </div>
 
                 <!-- DESKTOP TABLE -->
                 <div class="table-responsive desktop-table">
-                    <table class="table table-hover align-middle mb-0" style="font-size:0.88rem;">
+                    <table class="table align-middle mb-0" style="font-size:0.88rem;">
                         <thead class="table-light" style="font-size:0.73rem;font-weight:700;">
                             <tr>
                                 <th>Name</th>
-                                <th>Role</th>
-                                <th>Clock In</th>
-                                <th class="text-end">Mark</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Mark</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for record in teacher_attendance %}
-                            <tr class="border-bottom">
+                            <tr class="border-bottom {% if record.status == 'ABSENT' %}att-row-absent{% else %}att-row-present{% endif %}">
                                 <td>
                                     <div class="fw-bold">{% if record.staff.user %}{{ record.staff.user.first_name }} {{ record.staff.user.last_name }}{% else %}Unnamed{% endif %}</div>
-                                    <code class="text-muted" style="font-size:0.72rem;">{{ record.staff.employee_number }}</code>
+                                    <small class="text-muted" style="font-size:0.72rem;">{{ record.staff.role_designation }}</small>
                                 </td>
-                                <td><small class="text-secondary fw-medium">{{ record.staff.role_designation }}</small></td>
-                                <td>
+                                <td class="text-center">
                                     {% if record.status == 'PRESENT' %}
-                                        <span class="text-dark fw-semibold" style="font-size:0.82rem;"><i class="bi bi-check2-circle text-success me-1"></i>{{ record.time_in|time:"H:i"|default:"07:45" }}</span>
+                                        <span class="badge bg-success fw-bold px-2 py-2"><i class="bi bi-check-circle-fill me-1"></i>In</span>
                                     {% else %}
-                                        <span class="text-danger fw-bold" style="font-size:0.82rem;"><i class="bi bi-x-circle me-1"></i>ABSENT</span>
+                                        <span class="badge bg-danger fw-bold px-2 py-2"><i class="bi bi-x-circle-fill me-1"></i>Absent</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-end">
-                                    <div class="d-flex gap-1 justify-content-end">
+                                <td class="text-center">
+                                    <div class="d-flex gap-1 justify-content-center">
                                         <form method="POST" class="m-0">
                                             {% csrf_token %}
                                             <input type="hidden" name="record_id" value="{{ record.id }}">
                                             <input type="hidden" name="type" value="TEACHER">
                                             <input type="hidden" name="toggle_attendance" value="1">
                                             <input type="hidden" name="new_status" value="PRESENT">
-                                            <button type="submit" class="btn btn-sm fw-semibold {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}" style="font-size:0.78rem;">In</button>
+                                            <button type="submit" class="btn btn-sm fw-semibold {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}" style="font-size:0.78rem;min-width:50px;">In</button>
                                         </form>
                                         <form method="POST" class="m-0">
                                             {% csrf_token %}
@@ -222,13 +210,13 @@
                                             <input type="hidden" name="type" value="TEACHER">
                                             <input type="hidden" name="toggle_attendance" value="1">
                                             <input type="hidden" name="new_status" value="ABSENT">
-                                            <button type="submit" class="btn btn-sm fw-medium {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}" style="font-size:0.78rem;">Off</button>
+                                            <button type="submit" class="btn btn-sm fw-semibold {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}" style="font-size:0.78rem;min-width:50px;">Off</button>
                                         </form>
                                     </div>
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="4" class="text-center text-muted py-4">No staff records for today.</td></tr>
+                            <tr><td colspan="3" class="text-center text-muted py-4">No staff records for today.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -237,17 +225,16 @@
                 <!-- MOBILE CARD LIST -->
                 <div class="mobile-card-list" style="display:none;">
                     {% for record in teacher_attendance %}
-                    <div class="border rounded-3 p-3 mb-2 bg-white">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="rounded-3 p-3 mb-2 border {% if record.status == 'ABSENT' %}att-card-absent{% else %}att-card-present{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <div>
                                 <div class="fw-bold text-dark" style="font-size:0.92rem;">{% if record.staff.user %}{{ record.staff.user.first_name }} {{ record.staff.user.last_name }}{% else %}Unnamed{% endif %}</div>
-                                <code class="text-muted" style="font-size:0.75rem;">{{ record.staff.employee_number }}</code>
-                                <div class="text-secondary" style="font-size:0.75rem;">{{ record.staff.role_designation }}</div>
+                                <div class="text-muted" style="font-size:0.75rem;">{{ record.staff.role_designation }}</div>
                             </div>
                             {% if record.status == 'PRESENT' %}
-                                <span class="text-success fw-bold" style="font-size:0.8rem;"><i class="bi bi-check2-circle me-1"></i>{{ record.time_in|time:"H:i"|default:"07:45" }}</span>
+                                <span class="badge bg-success fw-bold px-2 py-2"><i class="bi bi-check-circle-fill me-1"></i>In</span>
                             {% else %}
-                                <span class="text-danger fw-bold" style="font-size:0.8rem;"><i class="bi bi-x-circle me-1"></i>ABSENT</span>
+                                <span class="badge bg-danger fw-bold px-2 py-2"><i class="bi bi-x-circle-fill me-1"></i>Absent</span>
                             {% endif %}
                         </div>
                         <div class="d-flex gap-2">
@@ -257,7 +244,7 @@
                                 <input type="hidden" name="type" value="TEACHER">
                                 <input type="hidden" name="toggle_attendance" value="1">
                                 <input type="hidden" name="new_status" value="PRESENT">
-                                <button type="submit" class="btn btn-sm fw-semibold w-100 {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}" style="font-size:0.82rem;">In</button>
+                                <button type="submit" class="btn btn-sm fw-semibold w-100 {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}">In</button>
                             </form>
                             <form method="POST" class="m-0 flex-fill">
                                 {% csrf_token %}
@@ -265,7 +252,7 @@
                                 <input type="hidden" name="type" value="TEACHER">
                                 <input type="hidden" name="toggle_attendance" value="1">
                                 <input type="hidden" name="new_status" value="ABSENT">
-                                <button type="submit" class="btn btn-sm fw-medium w-100 {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}" style="font-size:0.82rem;">Off</button>
+                                <button type="submit" class="btn btn-sm fw-semibold w-100 {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}">Off</button>
                             </form>
                         </div>
                     </div>
