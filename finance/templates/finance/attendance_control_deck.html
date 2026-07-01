@@ -51,7 +51,8 @@
     </div>
 
     <div class="row g-3">
-        <!-- STUDENTS -->
+
+        <!-- ── STUDENTS ── -->
         <div class="col-xl-7">
             <div class="card card-custom border-0 bg-white shadow-sm p-3 p-md-4">
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
@@ -70,7 +71,7 @@
                                 <th>Name</th>
                                 <th>Stream</th>
                                 <th>Status</th>
-                                <th class="text-end">Action</th>
+                                <th class="text-end">Mark</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -90,21 +91,28 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-end">
-                                    <form method="POST" class="m-0">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="record_id" value="{{ record.id }}">
-                                        <input type="hidden" name="type" value="STUDENT">
-                                        <input type="hidden" name="toggle_attendance" value="1">
-                                        {% if record.status == 'PRESENT' %}
-                                            <button type="submit" name="new_status" value="ABSENT" class="btn btn-sm btn-outline-danger fw-medium" style="font-size:0.78rem;">
-                                                <i class="bi bi-person-x me-1"></i>Flag Absent
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <form method="POST" class="m-0">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="record_id" value="{{ record.id }}">
+                                            <input type="hidden" name="type" value="STUDENT">
+                                            <input type="hidden" name="toggle_attendance" value="1">
+                                            <input type="hidden" name="new_status" value="PRESENT">
+                                            <button type="submit" class="btn btn-sm fw-semibold {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}" style="font-size:0.78rem;">
+                                                <i class="bi bi-person-check me-1"></i>Present
                                             </button>
-                                        {% else %}
-                                            <button type="submit" name="new_status" value="PRESENT" class="btn btn-sm btn-success fw-semibold text-white" style="font-size:0.78rem;">
-                                                <i class="bi bi-person-check me-1"></i>Mark Present
+                                        </form>
+                                        <form method="POST" class="m-0">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="record_id" value="{{ record.id }}">
+                                            <input type="hidden" name="type" value="STUDENT">
+                                            <input type="hidden" name="toggle_attendance" value="1">
+                                            <input type="hidden" name="new_status" value="ABSENT">
+                                            <button type="submit" class="btn btn-sm fw-medium {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}" style="font-size:0.78rem;">
+                                                <i class="bi bi-person-x me-1"></i>Absent
                                             </button>
-                                        {% endif %}
-                                    </form>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             {% empty %}
@@ -124,28 +132,35 @@
                                 <code class="text-primary" style="font-size:0.75rem;">{{ record.student.admission_number }}</code>
                                 <div class="text-muted" style="font-size:0.75rem;"><i class="bi bi-telephone me-1"></i>{{ record.student.parent_phone }}</div>
                             </div>
-                            <span class="badge bg-light text-dark border" style="font-size:0.7rem;">{{ record.student.class_stream.name|default:"—" }}</span>
+                            <div class="text-end">
+                                <span class="badge bg-light text-dark border mb-1 d-block" style="font-size:0.7rem;">{{ record.student.class_stream.name|default:"—" }}</span>
+                                {% if record.status == 'PRESENT' %}
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 fw-bold" style="font-size:0.72rem;"><i class="bi bi-fingerprint me-1"></i>Present</span>
+                                {% else %}
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 fw-bold" style="font-size:0.72rem;"><i class="bi bi-exclamation-triangle-fill me-1"></i>Absent</span>
+                                {% endif %}
+                            </div>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            {% if record.status == 'PRESENT' %}
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 fw-bold" style="font-size:0.75rem;"><i class="bi bi-fingerprint me-1"></i>Present</span>
-                            {% else %}
-                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 fw-bold" style="font-size:0.75rem;"><i class="bi bi-exclamation-triangle-fill me-1"></i>Absent</span>
-                            {% endif %}
-                            <form method="POST" class="m-0">
+                        <div class="d-flex gap-2">
+                            <form method="POST" class="m-0 flex-fill">
                                 {% csrf_token %}
                                 <input type="hidden" name="record_id" value="{{ record.id }}">
                                 <input type="hidden" name="type" value="STUDENT">
                                 <input type="hidden" name="toggle_attendance" value="1">
-                                {% if record.status == 'PRESENT' %}
-                                    <button type="submit" name="new_status" value="ABSENT" class="btn btn-sm btn-outline-danger fw-medium" style="font-size:0.8rem;">
-                                        <i class="bi bi-person-x me-1"></i>Flag Absent
-                                    </button>
-                                {% else %}
-                                    <button type="submit" name="new_status" value="PRESENT" class="btn btn-sm btn-success fw-semibold text-white" style="font-size:0.8rem;">
-                                        <i class="bi bi-person-check me-1"></i>Mark Present
-                                    </button>
-                                {% endif %}
+                                <input type="hidden" name="new_status" value="PRESENT">
+                                <button type="submit" class="btn btn-sm fw-semibold w-100 {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}" style="font-size:0.82rem;">
+                                    <i class="bi bi-person-check me-1"></i>Present
+                                </button>
+                            </form>
+                            <form method="POST" class="m-0 flex-fill">
+                                {% csrf_token %}
+                                <input type="hidden" name="record_id" value="{{ record.id }}">
+                                <input type="hidden" name="type" value="STUDENT">
+                                <input type="hidden" name="toggle_attendance" value="1">
+                                <input type="hidden" name="new_status" value="ABSENT">
+                                <button type="submit" class="btn btn-sm fw-medium w-100 {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}" style="font-size:0.82rem;">
+                                    <i class="bi bi-person-x me-1"></i>Absent
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -153,10 +168,11 @@
                     <p class="text-center text-muted py-3">No attendance records for today.</p>
                     {% endfor %}
                 </div>
+
             </div>
         </div>
 
-        <!-- STAFF -->
+        <!-- ── STAFF ── -->
         <div class="col-xl-5">
             <div class="card card-custom border-0 bg-white shadow-sm p-3 p-md-4">
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
@@ -172,7 +188,7 @@
                                 <th>Name</th>
                                 <th>Role</th>
                                 <th>Clock In</th>
-                                <th class="text-end">Action</th>
+                                <th class="text-end">Mark</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -191,17 +207,24 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-end">
-                                    <form method="POST" class="m-0">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="record_id" value="{{ record.id }}">
-                                        <input type="hidden" name="type" value="TEACHER">
-                                        <input type="hidden" name="toggle_attendance" value="1">
-                                        {% if record.status == 'PRESENT' %}
-                                            <button type="submit" name="new_status" value="ABSENT" class="btn btn-link text-danger p-0 border-0 fw-bold" style="font-size:0.8rem;">Flag Off</button>
-                                        {% else %}
-                                            <button type="submit" name="new_status" value="PRESENT" class="btn btn-link text-success p-0 border-0 fw-bold" style="font-size:0.8rem;">Log In</button>
-                                        {% endif %}
-                                    </form>
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <form method="POST" class="m-0">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="record_id" value="{{ record.id }}">
+                                            <input type="hidden" name="type" value="TEACHER">
+                                            <input type="hidden" name="toggle_attendance" value="1">
+                                            <input type="hidden" name="new_status" value="PRESENT">
+                                            <button type="submit" class="btn btn-sm fw-semibold {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}" style="font-size:0.78rem;">In</button>
+                                        </form>
+                                        <form method="POST" class="m-0">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="record_id" value="{{ record.id }}">
+                                            <input type="hidden" name="type" value="TEACHER">
+                                            <input type="hidden" name="toggle_attendance" value="1">
+                                            <input type="hidden" name="new_status" value="ABSENT">
+                                            <button type="submit" class="btn btn-sm fw-medium {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}" style="font-size:0.78rem;">Off</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             {% empty %}
@@ -227,17 +250,22 @@
                                 <span class="text-danger fw-bold" style="font-size:0.8rem;"><i class="bi bi-x-circle me-1"></i>ABSENT</span>
                             {% endif %}
                         </div>
-                        <div class="text-end">
-                            <form method="POST" class="m-0">
+                        <div class="d-flex gap-2">
+                            <form method="POST" class="m-0 flex-fill">
                                 {% csrf_token %}
                                 <input type="hidden" name="record_id" value="{{ record.id }}">
                                 <input type="hidden" name="type" value="TEACHER">
                                 <input type="hidden" name="toggle_attendance" value="1">
-                                {% if record.status == 'PRESENT' %}
-                                    <button type="submit" name="new_status" value="ABSENT" class="btn btn-sm btn-outline-danger fw-bold" style="font-size:0.8rem;">Flag Off</button>
-                                {% else %}
-                                    <button type="submit" name="new_status" value="PRESENT" class="btn btn-sm btn-outline-success fw-bold" style="font-size:0.8rem;">Log In</button>
-                                {% endif %}
+                                <input type="hidden" name="new_status" value="PRESENT">
+                                <button type="submit" class="btn btn-sm fw-semibold w-100 {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}" style="font-size:0.82rem;">In</button>
+                            </form>
+                            <form method="POST" class="m-0 flex-fill">
+                                {% csrf_token %}
+                                <input type="hidden" name="record_id" value="{{ record.id }}">
+                                <input type="hidden" name="type" value="TEACHER">
+                                <input type="hidden" name="toggle_attendance" value="1">
+                                <input type="hidden" name="new_status" value="ABSENT">
+                                <button type="submit" class="btn btn-sm fw-medium w-100 {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}" style="font-size:0.82rem;">Off</button>
                             </form>
                         </div>
                     </div>
@@ -245,8 +273,10 @@
                     <p class="text-center text-muted py-3">No staff records for today.</p>
                     {% endfor %}
                 </div>
+
             </div>
         </div>
+
     </div>
 </div>
 {% endblock %}
