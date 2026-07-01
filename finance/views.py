@@ -1647,6 +1647,7 @@ def global_attendance_control_deck(request):
             if record_type == 'STUDENT':
                 rec = StudentAttendanceRecord.objects.get(id=record_id)
                 rec.status = new_status
+                rec.is_present = (new_status == 'PRESENT')
                 rec.save()
                 if new_status == 'ABSENT':
                     messages.warning(request, f"SMS alert staged for parent of {rec.student.first_name} ({rec.student.parent_phone})")
