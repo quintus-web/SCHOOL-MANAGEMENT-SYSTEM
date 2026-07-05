@@ -114,9 +114,12 @@ class Command(BaseCommand):
                             'class_stream': stream_instance,
                             'guardian_name': guardian,
                             'parent_phone': phone,
-                            'current_balance': opening_balance
                         }
                     )
+                    # Only set opening balance on first creation — never overwrite manually entered balances
+                    if created:
+                        student.current_balance = opening_balance
+                        student.save(update_fields=['current_balance'])
                     if created:
                         student_count += 1
 

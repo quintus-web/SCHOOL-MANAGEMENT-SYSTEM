@@ -1406,8 +1406,10 @@ def post_homework_assignment(request):
 
 
 def staff_login_view(request):
-    """Maps to path('gateway/login/', name='staff_login')"""
-    role = request.GET.get("role", "Admin")
+    target_role = request.GET.get("role", "Admin").strip()
+
+    if request.user.is_authenticated:
+        return redirect('executive_kpis')
 
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
@@ -1416,19 +1418,29 @@ def staff_login_view(request):
         if username == default_username:
             _ensure_default_admin_user()
 
-        user = authenticate(
-            request,
-            username=username,
-            password=password
-        )
+        user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
-            request.session["role"] = role
-            return redirect("public_home")
-        
-        messages.error(request, "Operational authorization denied: Invalid terminal signatures.")
+            request.session["role"] = target_role
 
-    return render(request, "finance/staff_login.html", {"target_role": role})
+            next_url = request.GET.get('next', '')
+            if next_url:
+                return redirect(next_url)
+
+            if target_role == 'Bursar':
+                return redirect('bursar_dashboard')
+            elif target_role in ['Admin', 'Headteacher', 'Deputy']:
+                return redirect('executive_kpis')
+            elif target_role == 'Teacher':
+                return redirect('academic_hub')
+            elif target_role == 'Support':
+                return redirect('inventory_deck')
+
+            return redirect('executive_kpis')
+
+        messages.error(request, "Invalid username or password.")
+
+    return render(request, "finance/staff_login.html", {"target_role": target_role})
 
 
 def staff_logout_view(request):

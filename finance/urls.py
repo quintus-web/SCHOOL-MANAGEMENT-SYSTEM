@@ -4,7 +4,7 @@ from finance import views
 
 urlpatterns = [
     # ── CORE ACCESSIBLE WEB CHANNELS ──
-    path('', views.bursar_dashboard, name='public_home'),
+    path('', views.bursar_dashboard),
     
     # ── SECURITY & SESSIONS ACCESS WORKSPACES ──
     path('gateway/login/', views.staff_login_view, name='staff_login'),

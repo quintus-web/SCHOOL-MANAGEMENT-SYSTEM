@@ -5,7 +5,7 @@ from django.urls import path, include
 
 def root_redirect(request):
     if request.user.is_authenticated:
-        return redirect('bursar_dashboard')
+        return redirect('executive_kpis')
     return redirect('staff_login')
 
 

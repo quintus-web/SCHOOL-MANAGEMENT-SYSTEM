@@ -181,7 +181,7 @@
     {% endif %}
 
     <!-- Passes chosen role as target parameter URL payload query context string -->
-    <form method="POST" action="{% url 'staff_login' %}?role={{ target_role|default:'Admin' }}">
+    <form method="POST" action="{% url 'staff_login' %}?role={{ request.GET.role|default:'Admin' }}{% if request.GET.next %}&next={{ request.GET.next }}{% endif %}">
         {% csrf_token %}
         
         <!-- Username Identifier Input -->
