@@ -340,6 +340,7 @@ def single_student_profile_folder(request, student_id):
 
 
 @login_required
+@login_required
 def add_student_registry(request):
     if request.method == "POST":
         messages.success(request, "Enrollment initialization entry registered successfully.")
@@ -1451,6 +1452,7 @@ def staff_logout_view(request):
 
 
 @login_required
+@login_required
 def developer_debug_console_hub(request):
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         action = request.POST.get('action')
@@ -1575,6 +1577,7 @@ def marks_entry_portal(request):
     return render(request, 'finance/marks_entry_portal.html', context)
 
 
+@login_required
 def generate_report_card_view(request, student_id):
     """Aggregates scores and compiles an on-the-fly printable Report Card sheet for a specific student"""
     student = get_object_or_404(Student, id=student_id)
@@ -1708,6 +1711,7 @@ def global_attendance_control_deck(request):
     return render(request, 'finance/attendance_control_deck.html', context)
 
 
+@login_required
 def inventory_asset_control_deck(request):
     """Monitors school property stores, balances quantities, and audits maintenance reports"""
     if request.method == 'POST' and 'log_repair' in request.POST:
@@ -1739,6 +1743,7 @@ def inventory_asset_control_deck(request):
     return render(request, 'finance/inventory_control_deck.html', context)
 
 
+@login_required
 def daily_attendance_deck(request):
     """Handles class stream extraction and single-click bulk attendance writes"""
     students = Student.objects.all().order_by('last_name')
@@ -1769,6 +1774,7 @@ def daily_attendance_deck(request):
     return render(request, 'finance/daily_attendance_deck.html', context)
 
 
+@login_required
 def commit_bulk_attendance(request):
     """Processes bulk attendance submission"""
     if request.method == 'POST':
@@ -1900,6 +1906,7 @@ def bulk_balance_import(request):
     return render(request, "finance/bulk_balance_import.html")
 
 
+@login_required
 def add_new_student_onboarding(request):
     """Handles new student enrollment form submission"""
     if request.method == 'POST':
