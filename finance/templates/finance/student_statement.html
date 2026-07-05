@@ -44,8 +44,8 @@ function downloadPDF() {
         </div>
         <div class="col-md-4 text-md-end mt-3 mt-md-0">
             <span class="text-muted small text-uppercase d-block fw-semibold">Outstanding Balance</span>
-            {% if student.current_balance > 0 %}
-                <h3 class="fw-bold text-danger mb-0">KES {{ student.current_balance|floatformat:2 }}</h3>
+            {% if outstanding_balance > 0 %}
+                <h3 class="fw-bold text-danger mb-0">KES {{ outstanding_balance|floatformat:2 }}</h3>
             {% else %}
                 <h3 class="fw-bold text-success mb-0"><i class="bi bi-check-circle-fill"></i> Cleared</h3>
             {% endif %}

@@ -422,7 +422,8 @@ def student_account_statement(request, student_id):
 
     return render(request, "finance/student_statement.html", {
         "student": student_record,
-        "ledger_entries": ledger_entries
+        "ledger_entries": ledger_entries,
+        "outstanding_balance": float(student_record.current_balance or 0),
     })
 
 
