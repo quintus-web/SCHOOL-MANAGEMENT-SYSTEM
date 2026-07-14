@@ -58,6 +58,14 @@
                         <option value="BANK">Bank Transfer</option>
                     </select>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-secondary text-uppercase mb-2" style="font-size: 0.72rem;">Fee Term</label>
+                    <select name="term" class="form-select" id="term_select">
+                        <option value="TERM_1" {% if suggested_term == 'TERM_1' %}selected{% endif %}>Term 1</option>
+                        <option value="TERM_2" {% if suggested_term == 'TERM_2' %}selected{% endif %}>Term 2</option>
+                        <option value="TERM_3" {% if suggested_term == 'TERM_3' %}selected{% endif %}>Term 3</option>
+                    </select>
+                </div>
                 <div class="mb-4">
                     <label class="form-label small fw-bold text-secondary text-uppercase mb-2" style="font-size: 0.72rem;">Reference / Note (optional)</label>
                     <input type="text" name="description" class="form-control" placeholder="e.g. Mpesa ref, cheque no, or note...">

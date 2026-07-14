@@ -395,7 +395,7 @@ def student_account_statement(request, student_id):
     # Process Invoices as DEBITS (Money Owed)
     for inv in db_invoices:
         ledger_entries.append({
-            'date': inv.date_issued,
+            'date': datetime.datetime.combine(inv.date_issued, datetime.time.min),
             'description': inv.description if inv.description else "Tuition Fee Invoice Charge",
             'reference': f"INV-{inv.id}",
             'type': 'DEBIT',
@@ -419,11 +419,37 @@ def student_account_statement(request, student_id):
 
     # Sort timeline by date safely
     ledger_entries = [e for e in ledger_entries if e['date'] is not None]
-    ledger_entries.sort(key=lambda x: x['date'], reverse=True)
+
+    def _sort_key(d):
+        if isinstance(d, datetime.datetime):
+            return d.replace(tzinfo=None)
+        return datetime.datetime.combine(d, datetime.time.min)
+
+    ledger_entries.sort(key=lambda x: _sort_key(x['date']), reverse=True)
+
+    # Recorded payments divided per term (Term 1 / 2 / 3)
+    TERM_ORDER = [('TERM_1', 'Term 1'), ('TERM_2', 'Term 2'), ('TERM_3', 'Term 3')]
+    payments_by_term = []
+    total_recorded = Decimal('0.00')
+    for term_code, term_label in TERM_ORDER:
+        term_receipts = FeeReceipt.objects.filter(
+            student=student_record, term=term_code, status='COMPLETED'
+        ).order_by('-date_paid')
+        subtotal = sum((r.amount for r in term_receipts), Decimal('0.00'))
+        total_recorded += subtotal
+        payments_by_term.append({
+            'code': term_code,
+            'label': term_label,
+            'receipts': term_receipts,
+            'subtotal': subtotal,
+            'count': term_receipts.count(),
+        })
 
     return render(request, "finance/student_statement.html", {
         "student": student_record,
         "ledger_entries": ledger_entries,
+        "payments_by_term": payments_by_term,
+        "total_recorded": total_recorded,
         "outstanding_balance": float(student_record.current_balance or 0),
     })
 
@@ -454,13 +480,22 @@ def collect_fee_payment(request, student_id):
         channel = request.POST.get("payment_channel", "CASH")
         description = request.POST.get("description", "School Fees Payment").strip() or "School Fees Payment"
 
-        open_invoice = FeeInvoice.objects.filter(student=student).order_by('date_issued').first()
+        term = request.POST.get("term", "TERM_1")
+        if term not in ("TERM_1", "TERM_2", "TERM_3"):
+            term = "TERM_1"
+
+        # Prefer an invoice for the selected term so the payment is attributed correctly
+        open_invoice = FeeInvoice.objects.filter(student=student, term=term).order_by('date_issued').first()
         if not open_invoice:
-            fee_entry = FeeStructure.objects.filter(level=student.class_stream.name).first() if student.class_stream else None
+            open_invoice = FeeInvoice.objects.filter(student=student).order_by('date_issued').first()
+        if not open_invoice:
+            fee_entry = FeeStructure.objects.filter(level=student.class_stream.name, term=term, year=2026).first() if student.class_stream else None
             invoice_amount = fee_entry.amount if fee_entry else Decimal("0.00")
             open_invoice = FeeInvoice.objects.create(
                 student=student,
-                title=f"{student.class_stream.name if student.class_stream else 'Unassigned'} Term 1 Invoice 2026",
+                term=term,
+                year=2026,
+                title=f"{student.class_stream.name if student.class_stream else 'Unassigned'} {term.replace('_', ' ')} Invoice 2026",
                 amount=invoice_amount,
                 description="Auto-generated from Crescent Heights Fee Structure 2026"
             )
@@ -468,6 +503,7 @@ def collect_fee_payment(request, student_id):
         FeeReceipt.objects.create(
             student=student,
             invoice=open_invoice,
+            term=term,
             amount=amount,
             status="COMPLETED",
             payment_channel=channel,
@@ -481,7 +517,9 @@ def collect_fee_payment(request, student_id):
         messages.success(request, f"Payment of KES {amount:,.2f} posted via {channel}.")
         return redirect("bursar_dashboard")
 
-    return render(request, "finance/receipt_form.html", {"student": student})
+    suggested_invoice = FeeInvoice.objects.filter(student=student).order_by('date_issued').first()
+    suggested_term = suggested_invoice.term if suggested_invoice else "TERM_1"
+    return render(request, "finance/receipt_form.html", {"student": student, "suggested_term": suggested_term})
 
 
 @login_required
