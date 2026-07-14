@@ -23,7 +23,7 @@ from .models import (
     SchoolAsset, AssetMaintenanceLog,
     HomeworkAssignment, SchoolAnnouncement,
     LessonPlan, LearningMaterial, TimetableSlot,
-    DisciplineReport, LeaveApplication
+    DisciplineReport, LeaveApplication, SchoolHoliday
 )
 from django.contrib.auth.models import User
 
@@ -1692,54 +1692,98 @@ def parent_portal_gateway(request):
 def global_attendance_control_deck(request):
     today = datetime.date.today()
 
-    # ── Handle toggle POST first, before seeding ──
-    if request.method == 'POST' and 'toggle_attendance' in request.POST:
-        record_id = request.POST.get('record_id', '').strip()
-        record_type = request.POST.get('type', '').strip()
-        new_status = request.POST.get('new_status', '').strip()
+    # ── Weekend / holiday awareness ──
+    is_weekend = today.weekday() >= 5  # 5=Saturday, 6=Sunday
+    holiday = SchoolHoliday.objects.filter(date=today).first()
+    attendance_closed = is_weekend or holiday is not None
+    if is_weekend:
+        close_reason = "Weekend — no attendance required."
+    elif holiday:
+        close_reason = f"Holiday: {holiday.name}."
+    else:
+        close_reason = ""
 
-        if record_type == 'STUDENT' and new_status in ('PRESENT', 'ABSENT'):
-            try:
-                rec = StudentAttendanceRecord.objects.get(id=record_id, date=today)
-                rec.status = new_status
-                rec.is_present = (new_status == 'PRESENT')
-                rec.save(update_fields=['status', 'is_present'])
-                if new_status == 'ABSENT':
-                    messages.warning(request, f"{rec.student.first_name} marked absent.")
-                else:
-                    messages.success(request, f"{rec.student.first_name} marked present.")
-            except StudentAttendanceRecord.DoesNotExist:
-                messages.error(request, "Student record not found. Please refresh.")
+    # ── Handle POST actions ──
+    if request.method == 'POST':
+        action = request.POST.get('action')
 
-        elif record_type == 'TEACHER' and new_status in ('PRESENT', 'ABSENT'):
-            try:
-                rec = TeacherAttendanceRecord.objects.get(id=record_id, date=today)
-                rec.status = new_status
-                rec.save(update_fields=['status'])
-            except TeacherAttendanceRecord.DoesNotExist:
-                messages.error(request, "Staff record not found. Please refresh.")
+        if action == 'add_holiday':
+            hd = request.POST.get('holiday_date', '').strip()
+            hn = request.POST.get('holiday_name', '').strip()
+            if hd and hn:
+                try:
+                    from django.utils.dateparse import parse_date
+                    d = parse_date(hd)
+                    if d:
+                        SchoolHoliday.objects.get_or_create(
+                            date=d,
+                            defaults={'name': hn, 'description': request.POST.get('holiday_desc', '')}
+                        )
+                        messages.success(request, f"Holiday '{hn}' on {d} recorded.")
+                except Exception:
+                    messages.error(request, "Could not save holiday (invalid date?).")
+            else:
+                messages.error(request, "Holiday date and name are required.")
+            return redirect('attendance_deck')
 
-        return redirect('attendance_deck')
+        if action == 'delete_holiday':
+            SchoolHoliday.objects.filter(id=request.POST.get('holiday_id')).delete()
+            messages.success(request, "Holiday removed.")
+            return redirect('attendance_deck')
 
-    # ── Seed today's records only for students/staff missing one ──
-    existing_student_ids = set(
-        StudentAttendanceRecord.objects.filter(date=today).values_list('student_id', flat=True)
-    )
-    StudentAttendanceRecord.objects.bulk_create([
-        StudentAttendanceRecord(student=s, date=today, status='PRESENT', is_present=True)
-        for s in Student.objects.filter(is_active=True).exclude(id__in=existing_student_ids)
-    ], ignore_conflicts=True)
+        if 'toggle_attendance' in request.POST:
+            record_id = request.POST.get('record_id', '').strip()
+            record_type = request.POST.get('type', '').strip()
+            new_status = request.POST.get('new_status', '').strip()
 
-    existing_staff_ids = set(
-        TeacherAttendanceRecord.objects.filter(date=today).values_list('staff_id', flat=True)
-    )
-    TeacherAttendanceRecord.objects.bulk_create([
-        TeacherAttendanceRecord(staff=st, date=today, status='PRESENT', time_in=datetime.time(7, 45))
-        for st in StaffProfile.objects.exclude(id__in=existing_staff_ids)
-    ], ignore_conflicts=True)
+            if record_type == 'STUDENT' and new_status in ('PRESENT', 'ABSENT'):
+                try:
+                    rec = StudentAttendanceRecord.objects.get(id=record_id, date=today)
+                    rec.status = new_status
+                    rec.is_present = (new_status == 'PRESENT')
+                    rec.save(update_fields=['status', 'is_present'])
+                    if new_status == 'ABSENT':
+                        messages.warning(request, f"{rec.student.first_name} marked absent.")
+                    else:
+                        messages.success(request, f"{rec.student.first_name} marked present.")
+                except StudentAttendanceRecord.DoesNotExist:
+                    messages.error(request, "Student record not found. Please refresh.")
+
+            elif record_type == 'TEACHER' and new_status in ('PRESENT', 'ABSENT'):
+                try:
+                    rec = TeacherAttendanceRecord.objects.get(id=record_id, date=today)
+                    rec.status = new_status
+                    rec.save(update_fields=['status'])
+                except TeacherAttendanceRecord.DoesNotExist:
+                    messages.error(request, "Staff record not found. Please refresh.")
+
+            return redirect('attendance_deck')
+
+    # ── Seed today's records only for students/staff missing one (skip weekends/holidays) ──
+    if not attendance_closed:
+        existing_student_ids = set(
+            StudentAttendanceRecord.objects.filter(date=today).values_list('student_id', flat=True)
+        )
+        StudentAttendanceRecord.objects.bulk_create([
+            StudentAttendanceRecord(student=s, date=today, status='PRESENT', is_present=True)
+            for s in Student.objects.filter(is_active=True).exclude(id__in=existing_student_ids)
+        ], ignore_conflicts=True)
+
+        existing_staff_ids = set(
+            TeacherAttendanceRecord.objects.filter(date=today).values_list('staff_id', flat=True)
+        )
+        TeacherAttendanceRecord.objects.bulk_create([
+            TeacherAttendanceRecord(staff=st, date=today, status='PRESENT', time_in=datetime.time(7, 45))
+            for st in StaffProfile.objects.exclude(id__in=existing_staff_ids)
+        ], ignore_conflicts=True)
 
     context = {
         'today': today,
+        'attendance_closed': attendance_closed,
+        'close_reason': close_reason,
+        'is_weekend': is_weekend,
+        'holiday': holiday,
+        'holidays': SchoolHoliday.objects.all(),
         'student_attendance': StudentAttendanceRecord.objects.filter(date=today).select_related('student__class_stream').order_by('student__first_name'),
         'teacher_attendance': TeacherAttendanceRecord.objects.filter(date=today).select_related('staff__user').order_by('staff__employee_number'),
         'total_present_students': StudentAttendanceRecord.objects.filter(date=today, status='PRESENT').count(),
@@ -1857,17 +1901,24 @@ def finance_data_entry(request):
                 channel = request.POST.get('channel', 'CASH')
                 description = request.POST.get('description', '').strip() or 'Past Payment (Paper Record)'
                 pay_date = request.POST.get('pay_date', '')
+                term = request.POST.get('term', 'TERM_1')
+                if term not in ('TERM_1', 'TERM_2', 'TERM_3'):
+                    term = 'TERM_1'
 
                 if amount <= 0:
                     messages.error(request, 'Amount must be greater than zero.')
                     return redirect(f"{request.path}?student_id={student_id}")
 
-                invoice = FeeInvoice.objects.filter(student=selected_student).order_by('date_issued').first()
+                invoice = FeeInvoice.objects.filter(student=selected_student, term=term).order_by('date_issued').first()
                 if not invoice:
-                    fee_entry = FeeStructure.objects.filter(level=selected_student.class_stream.name).first() if selected_student.class_stream else None
+                    invoice = FeeInvoice.objects.filter(student=selected_student).order_by('date_issued').first()
+                if not invoice:
+                    fee_entry = FeeStructure.objects.filter(level=selected_student.class_stream.name, term=term, year=2026).first() if selected_student.class_stream else None
                     invoice = FeeInvoice.objects.create(
                         student=selected_student,
-                        title=f"{selected_student.class_stream.name if selected_student.class_stream else 'General'} Fees 2026",
+                        term=term,
+                        year=2026,
+                        title=f"{selected_student.class_stream.name if selected_student.class_stream else 'General'} {term.replace('_', ' ')} Fees 2026",
                         amount=selected_student.current_balance or (fee_entry.amount if fee_entry else Decimal('0.00')),
                         description='Auto-generated for paper record entry'
                     )
@@ -1876,6 +1927,7 @@ def finance_data_entry(request):
                 receipt = FeeReceipt.objects.create(
                     student=selected_student,
                     invoice=invoice,
+                    term=term,
                     amount=amount,
                     status='COMPLETED',
                     payment_channel=channel,

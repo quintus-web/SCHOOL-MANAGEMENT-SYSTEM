@@ -322,3 +322,16 @@ class TimetableSlot(models.Model):
 
     def __str__(self):
         return f"{self.get_day_display()} | {self.time_start.strftime('%H:%M')} - {self.time_end.strftime('%H:%M')} ({self.subject.code})"
+
+
+class SchoolHoliday(models.Model):
+    date = models.DateField(unique=True)
+    name = models.CharField(max_length=150)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['date']
+
+    def __str__(self):
+        return f"{self.name} ({self.date})"

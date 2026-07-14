@@ -1,5 +1,6 @@
 # finance/urls.py
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from finance import views
 
 urlpatterns = [
@@ -9,6 +10,13 @@ urlpatterns = [
     # ── SECURITY & SESSIONS ACCESS WORKSPACES ──
     path('gateway/login/', views.staff_login_view, name='staff_login'),
     path('gateway/logout/', views.staff_logout_view, name='staff_logout'),
+    path('gateway/change-password/', auth_views.PasswordChangeView.as_view(
+        template_name='finance/change_password.html',
+        success_url='/gateway/password-changed/'
+    ), name='password_change'),
+    path('gateway/password-changed/', auth_views.PasswordChangeDoneView.as_view(
+        template_name='finance/password_changed.html'
+    ), name='password_change_done'),
     path('portal/executive-kpis/', views.executive_analytics_kpi_dashboard, name='executive_kpis'),
     
     # ── STUDENT OPERATIONAL DIRECTORY ──
