@@ -139,15 +139,15 @@ def executive_analytics_kpi_dashboard(request):
     total_instructors = StaffProfile.objects.filter(role_designation='TEACHER', current_status='ACTIVE').count()
     total_staff = StaffProfile.objects.filter(current_status='ACTIVE').count()
 
-    total_invoiced = FeeInvoice.objects.aggregate(total=Sum('amount'))['total'] or 0.00
-    total_collected = FeeReceipt.objects.filter(status='COMPLETED').aggregate(total=Sum('amount'))['total'] or 0.00
-    total_outstanding_arrears = active_students.aggregate(total=Sum('current_balance'))['total'] or 0.00
+    total_invoiced = FeeInvoice.objects.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    total_collected = FeeReceipt.objects.filter(status='COMPLETED').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    total_outstanding_arrears = active_students.aggregate(total=Sum('current_balance'))['total'] or Decimal('0.00')
     collection_efficiency = (float(total_collected) / float(total_invoiced) * 100) if total_invoiced > 0 else 0.0
 
     term_fee_summary = []
     for term in ['TERM_1', 'TERM_2', 'TERM_3']:
-        invoiced = FeeInvoice.objects.filter(term=term).aggregate(total=Sum('amount'))['total'] or 0.00
-        collected = FeeReceipt.objects.filter(status='COMPLETED', invoice__term=term).aggregate(total=Sum('amount'))['total'] or 0.00
+        invoiced = FeeInvoice.objects.filter(term=term).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        collected = FeeReceipt.objects.filter(status='COMPLETED', invoice__term=term).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         term_fee_summary.append({
             'term': term,
             'label': term.replace('_', ' '),
@@ -160,9 +160,9 @@ def executive_analytics_kpi_dashboard(request):
     stream_breakdown = []
     for stream in valid_streams:
         students = active_students.filter(class_stream=stream).count()
-        invoiced = FeeInvoice.objects.filter(student__class_stream=stream).aggregate(total=Sum('amount'))['total'] or 0.00
-        collected = FeeReceipt.objects.filter(status='COMPLETED', student__class_stream=stream).aggregate(total=Sum('amount'))['total'] or 0.00
-        balance = active_students.filter(class_stream=stream).aggregate(total=Sum('current_balance'))['total'] or 0.00
+        invoiced = FeeInvoice.objects.filter(student__class_stream=stream).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        collected = FeeReceipt.objects.filter(status='COMPLETED', student__class_stream=stream).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        balance = active_students.filter(class_stream=stream).aggregate(total=Sum('current_balance'))['total'] or Decimal('0.00')
         stream_breakdown.append({
             'stream': stream,
             'students': students,
@@ -186,10 +186,10 @@ def executive_analytics_kpi_dashboard(request):
     pending_plans = LessonPlan.objects.filter(is_approved=False).count()
     timetable_slots = TimetableSlot.objects.count()
 
-    total_assets = SchoolAsset.objects.aggregate(total=Sum('total_quantity'))['total'] or 0
-    available_assets = SchoolAsset.objects.filter(status='OPERATIONAL').aggregate(total=Sum('available_quantity'))['total'] or 0
+    total_assets = SchoolAsset.objects.aggregate(total=Sum('total_quantity'))['total'] or Decimal('0.00')
+    available_assets = SchoolAsset.objects.filter(status='OPERATIONAL').aggregate(total=Sum('available_quantity'))['total'] or Decimal('0.00')
     assets_in_workshop = SchoolAsset.objects.filter(status='UNDER_REPAIR').count()
-    maintenance_cost = AssetMaintenanceLog.objects.aggregate(total=Sum('cost_incurred_kes'))['total'] or 0.00
+    maintenance_cost = AssetMaintenanceLog.objects.aggregate(total=Sum('cost_incurred_kes'))['total'] or Decimal('0.00')
     facility_operational_rate = round(((total_assets - assets_in_workshop) / total_assets) * 100, 1) if total_assets > 0 else 100.0
 
     subject_performance = []
@@ -217,8 +217,8 @@ def executive_analytics_kpi_dashboard(request):
     # ── EXECUTIVE REPORT DATA ──
     finance_report_data = []
     for s in active_students.select_related('class_stream'):
-        s_inv = FeeInvoice.objects.filter(student=s).aggregate(total=Sum('amount'))['total'] or 0
-        s_rec = FeeReceipt.objects.filter(status='COMPLETED', student=s).aggregate(total=Sum('amount'))['total'] or 0
+        s_inv = FeeInvoice.objects.filter(student=s).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        s_rec = FeeReceipt.objects.filter(status='COMPLETED', student=s).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         finance_report_data.append({
             'adm': s.admission_number,
             'name': f"{s.first_name} {s.last_name}",
@@ -565,7 +565,7 @@ def invoice_list(request):
 
     levels = _get_valid_grade_names()
     terms = ['TERM_1', 'TERM_2', 'TERM_3']
-    total_amount = qs.aggregate(total=Sum('amount'))['total'] or 0
+    total_amount = qs.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
 
     return render(request, "finance/invoice_list.html", {
         "invoices": qs,
@@ -638,16 +638,16 @@ def financial_analytics(request):
 
     levels = _get_valid_grade_names()
 
-    expected = float(all_invoices.aggregate(total=Sum('amount'))['total'] or 0)
-    collected = float(all_receipts.aggregate(total=Sum('amount'))['total'] or 0)
+    expected = float(all_invoices.aggregate(total=Sum('amount'))['total'] or Decimal('0.00'))
+    collected = float(all_receipts.aggregate(total=Sum('amount'))['total'] or Decimal('0.00'))
     outstanding = expected - collected
     collection_rate = round((collected / expected) * 100, 1) if expected else 0.0
 
     stream_breakdown = []
     for lvl in levels:
         lvl_students = students_qs.filter(class_stream__name=lvl)
-        lvl_expected = float(all_invoices.filter(student__class_stream__name=lvl).aggregate(total=Sum('amount'))['total'] or 0)
-        lvl_collected = float(all_receipts.filter(student__class_stream__name=lvl).aggregate(total=Sum('amount'))['total'] or 0)
+        lvl_expected = float(all_invoices.filter(student__class_stream__name=lvl).aggregate(total=Sum('amount'))['total'] or Decimal('0.00'))
+        lvl_collected = float(all_receipts.filter(student__class_stream__name=lvl).aggregate(total=Sum('amount'))['total'] or Decimal('0.00'))
         lvl_outstanding = lvl_expected - lvl_collected
         stream_breakdown.append({
             'level': lvl,
@@ -660,8 +660,8 @@ def financial_analytics(request):
 
     term_data = []
     for t in ['TERM_1', 'TERM_2', 'TERM_3']:
-        t_exp = float(FeeInvoice.objects.filter(term=t).aggregate(total=Sum('amount'))['total'] or 0)
-        t_col = float(FeeReceipt.objects.filter(invoice__term=t).aggregate(total=Sum('amount'))['total'] or 0)
+        t_exp = float(FeeInvoice.objects.filter(term=t).aggregate(total=Sum('amount'))['total'] or Decimal('0.00'))
+        t_col = float(FeeReceipt.objects.filter(invoice__term=t).aggregate(total=Sum('amount'))['total'] or Decimal('0.00'))
         term_data.append({
             'term': t,
             'expected': t_exp,
@@ -682,10 +682,10 @@ def financial_analytics(request):
         })
 
     payment_channels = []
-    total_receipts = all_receipts.aggregate(total=Sum('amount'))['total'] or 0
+    total_receipts = all_receipts.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     channel_qs = all_receipts.values('payment_channel').annotate(total=Sum('amount'), count=Count('id'))
     for ch in channel_qs:
-        channel_total = float(ch['total'] or 0)
+        channel_total = float(ch['total'] or Decimal('0.00'))
         payment_channels.append({
             'channel': ch['payment_channel'] or 'CASH',
             'total': channel_total,
@@ -815,8 +815,8 @@ def finance_reports_hub(request):
             receipts = receipts.filter(student__class_stream__name=level)
         report_data = []
         for s in students_qs.select_related('class_stream'):
-            s_inv = invoices.filter(student=s).aggregate(total=Sum('amount'))['total'] or 0
-            s_rec = receipts.filter(student=s).aggregate(total=Sum('amount'))['total'] or 0
+            s_inv = invoices.filter(student=s).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            s_rec = receipts.filter(student=s).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             report_data.append({
                 'student': s, 'stream': s.class_stream.name if s.class_stream else 'Unassigned',
                 'invoiced': float(s_inv), 'collected': float(s_rec),
@@ -946,8 +946,8 @@ def export_report_csv(request, report_type):
             receipts = receipts.filter(student__class_stream__name=level)
         writer.writerow(["Admission No", "Student Name", "Stream", "Invoiced (KES)", "Collected (KES)", "Balance (KES)", "Collection Rate %"])
         for s in students_qs.select_related('class_stream'):
-            s_inv = invoices.filter(student=s).aggregate(total=Sum('amount'))['total'] or 0
-            s_rec = receipts.filter(student=s).aggregate(total=Sum('amount'))['total'] or 0
+            s_inv = invoices.filter(student=s).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            s_rec = receipts.filter(student=s).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             rate = round((float(s_rec)/float(s_inv))*100,1) if s_inv else 0.0
             writer.writerow([s.admission_number, f"{s.first_name} {s.last_name}",
                              s.class_stream.name if s.class_stream else "Unassigned",
