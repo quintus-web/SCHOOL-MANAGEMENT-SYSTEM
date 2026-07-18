@@ -50,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'finance.middleware.RoleAccessMiddleware',
 ]
 
 ROOT_URLCONF = 'sms_core.urls'

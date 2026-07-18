@@ -1467,16 +1467,17 @@ def staff_login_view(request):
             if next_url:
                 return redirect(next_url)
 
-            if target_role == 'Bursar':
-                return redirect('bursar_dashboard')
-            elif target_role in ['Admin', 'Headteacher', 'Deputy']:
-                return redirect('executive_kpis')
-            elif target_role == 'Teacher':
-                return redirect('academic_hub')
-            elif target_role == 'Support':
-                return redirect('inventory_deck')
+            if user.is_superuser:
+                if target_role == 'Bursar':
+                    return redirect('bursar_dashboard')
+                elif target_role == 'Teacher':
+                    return redirect('academic_hub')
+                elif target_role == 'Support':
+                    return redirect('inventory_deck')
+                return redirect('executive_kpis')  # Admin / Headteacher / Deputy owners
 
-            return redirect('executive_kpis')
+            # Non-owner staff are restricted to shared areas (Learners / Attendance / Academics)
+            return redirect('academic_hub')
 
         messages.error(request, "Invalid username or password.")
 
@@ -1694,7 +1695,9 @@ def global_attendance_control_deck(request):
 
     # ── Weekend / holiday awareness ──
     is_weekend = today.weekday() >= 5  # 5=Saturday, 6=Sunday
-    holiday = SchoolHoliday.objects.filter(date=today).first()
+    holiday = SchoolHoliday.objects.filter(start_date__lte=today).filter(
+        Q(end_date__gte=today) | Q(end_date__isnull=True, start_date=today)
+    ).first()
     attendance_closed = is_weekend or holiday is not None
     if is_weekend:
         close_reason = "Weekend — no attendance required."
@@ -1708,22 +1711,27 @@ def global_attendance_control_deck(request):
         action = request.POST.get('action')
 
         if action == 'add_holiday':
-            hd = request.POST.get('holiday_date', '').strip()
+            hs = request.POST.get('holiday_start', '').strip()
+            he = request.POST.get('holiday_end', '').strip()
             hn = request.POST.get('holiday_name', '').strip()
-            if hd and hn:
+            if hs and hn:
                 try:
                     from django.utils.dateparse import parse_date
-                    d = parse_date(hd)
-                    if d:
+                    start = parse_date(hs)
+                    end = parse_date(he) if he else None
+                    if start and end and end < start:
+                        end = start
+                    if start:
                         SchoolHoliday.objects.get_or_create(
-                            date=d,
-                            defaults={'name': hn, 'description': request.POST.get('holiday_desc', '')}
+                            start_date=start,
+                            defaults={'name': hn, 'end_date': end, 'description': request.POST.get('holiday_desc', '')}
                         )
-                        messages.success(request, f"Holiday '{hn}' on {d} recorded.")
+                        label = f"{start} – {end}" if end else f"{start}"
+                        messages.success(request, f"Holiday '{hn}' ({label}) recorded.")
                 except Exception:
                     messages.error(request, "Could not save holiday (invalid date?).")
             else:
-                messages.error(request, "Holiday date and name are required.")
+                messages.error(request, "Holiday start date and name are required.")
             return redirect('attendance_deck')
 
         if action == 'delete_holiday':

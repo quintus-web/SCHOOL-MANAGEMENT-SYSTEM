@@ -325,13 +325,20 @@ class TimetableSlot(models.Model):
 
 
 class SchoolHoliday(models.Model):
-    date = models.DateField(unique=True)
     name = models.CharField(max_length=150)
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True, help_text="Leave blank for a single-day holiday")
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['date']
+        ordering = ['start_date']
 
     def __str__(self):
-        return f"{self.name} ({self.date})"
+        if self.end_date and self.end_date != self.start_date:
+            return f"{self.name} ({self.start_date} – {self.end_date})"
+        return f"{self.name} ({self.start_date})"
+
+    @property
+    def covers(self):
+        return self.end_date or self.start_date

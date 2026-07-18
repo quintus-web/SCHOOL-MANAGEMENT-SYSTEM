@@ -148,6 +148,7 @@
         </div>
 
         <ul class="sidebar-menu-list">
+            {% if request.user.is_superuser %}
             <li class="sidebar-menu-item">
                 <a class="sidebar-link" href="{% url 'executive_kpis' %}">
                     <i class="bi bi-speedometer2 fs-5"></i> <span>Dashboard</span>
@@ -158,14 +159,13 @@
                     <i class="bi bi-person-video3 fs-5"></i> <span>Learners</span>
                 </a>
             </li>
-
             <details class="sidebar-section">
                 <summary class="sidebar-link sidebar-section-toggle">
                     <i class="bi bi-cash-stack fs-5"></i> <span>Finance</span> <i class="bi bi-chevron-right"></i>
                 </summary>
                 <ul class="sidebar-submenu">
                     <li><a class="sidebar-link" href="{% url 'bursar_dashboard' %}"><span>Fee Ledger</span></a></li>
-                        <li><a class="sidebar-link" href="{% url 'finance_data_entry' %}"><span>Data Entry</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'finance_data_entry' %}"><span>Data Entry</span></a></li>
                     <li><a class="sidebar-link" href="{% url 'invoice_list' %}"><span>Invoices</span></a></li>
                     <li><a class="sidebar-link" href="{% url 'fee_structure' %}"><span>Fee Structure</span></a></li>
                     <li><a class="sidebar-link" href="{% url 'generate_bulk_invoices' %}"><span>Bulk Invoices</span></a></li>
@@ -174,17 +174,15 @@
                     <li><a class="sidebar-link" href="{% url 'finance_reports' %}"><span>Reports</span></a></li>
                 </ul>
             </details>
-
             <details class="sidebar-section">
                 <summary class="sidebar-link sidebar-section-toggle">
-                    <i class="bi bi-clock-history fs-5"></i> <span>Attendance</span> <i class="bi bi-chevron-right"></i>
+                    <i class="bi bi-boxes fs-5"></i> <span>Operations</span> <i class="bi bi-chevron-right"></i>
                 </summary>
                 <ul class="sidebar-submenu">
-                    <li><a class="sidebar-link" href="{% url 'attendance_deck' %}"><span>Daily Attendance</span></a></li>
-                    <li><a class="sidebar-link" href="{% url 'attendance_history' %}"><span>Attendance Reports</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'grade_promotion' %}"><span>Grade Promotion</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'inventory_deck' %}"><span>Inventory &amp; Assets</span></a></li>
                 </ul>
             </details>
-
             <details class="sidebar-section">
                 <summary class="sidebar-link sidebar-section-toggle">
                     <i class="bi bi-people-fill fs-5"></i> <span>Staff</span> <i class="bi bi-chevron-right"></i>
@@ -194,7 +192,15 @@
                     <li><a class="sidebar-link" href="{% url 'leave_management' %}"><span>Leave Management</span></a></li>
                 </ul>
             </details>
-
+            <details class="sidebar-section">
+                <summary class="sidebar-link sidebar-section-toggle">
+                    <i class="bi bi-clock-history fs-5"></i> <span>Attendance</span> <i class="bi bi-chevron-right"></i>
+                </summary>
+                <ul class="sidebar-submenu">
+                    <li><a class="sidebar-link" href="{% url 'attendance_deck' %}"><span>Daily Attendance</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'attendance_history' %}"><span>Attendance Reports</span></a></li>
+                </ul>
+            </details>
             <details class="sidebar-section">
                 <summary class="sidebar-link sidebar-section-toggle">
                     <i class="bi bi-book-half fs-5"></i> <span>Academics</span> <i class="bi bi-chevron-right"></i>
@@ -207,16 +213,41 @@
                     <li><a class="sidebar-link" href="{% url 'teacher_sms_broadcast' %}"><span>Parent SMS</span></a></li>
                 </ul>
             </details>
-
+            {% else %}
+            <li class="sidebar-menu-item">
+                <a class="sidebar-link" href="{% url 'student_registry' %}">
+                    <i class="bi bi-person-video3 fs-5"></i> <span>Learners</span>
+                </a>
+            </li>
             <details class="sidebar-section">
                 <summary class="sidebar-link sidebar-section-toggle">
-                    <i class="bi bi-boxes fs-5"></i> <span>Operations</span> <i class="bi bi-chevron-right"></i>
+                    <i class="bi bi-cash-stack fs-5"></i> <span>Finance</span> <i class="bi bi-chevron-right"></i>
                 </summary>
                 <ul class="sidebar-submenu">
-                    <li><a class="sidebar-link" href="{% url 'grade_promotion' %}"><span>Grade Promotion</span></a></li>
-                    <li><a class="sidebar-link" href="{% url 'inventory_deck' %}"><span>Inventory & Assets</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'finance_data_entry' %}"><span>Data Entry</span></a></li>
                 </ul>
             </details>
+            <details class="sidebar-section">
+                <summary class="sidebar-link sidebar-section-toggle">
+                    <i class="bi bi-clock-history fs-5"></i> <span>Attendance</span> <i class="bi bi-chevron-right"></i>
+                </summary>
+                <ul class="sidebar-submenu">
+                    <li><a class="sidebar-link" href="{% url 'attendance_deck' %}"><span>Daily Attendance</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'attendance_history' %}"><span>Attendance Reports</span></a></li>
+                </ul>
+            </details>
+            <details class="sidebar-section">
+                <summary class="sidebar-link sidebar-section-toggle">
+                    <i class="bi bi-book-half fs-5"></i> <span>Academics</span> <i class="bi bi-chevron-right"></i>
+                </summary>
+                <ul class="sidebar-submenu">
+                    <li><a class="sidebar-link" href="{% url 'academic_hub' %}"><span>Academic Hub</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'marks_entry_portal' %}"><span>Grading Desk</span></a></li>
+                    <li><a class="sidebar-link" href="{% url 'post_homework' %}"><span>Homework</span></a></li>
+                </ul>
+            </details>
+            {% endif %}
+        </ul>
         </ul>
 
         <div class="sidebar-footer">

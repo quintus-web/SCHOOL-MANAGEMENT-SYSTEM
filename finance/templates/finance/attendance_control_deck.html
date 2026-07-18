@@ -288,31 +288,38 @@
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_holiday">
                     <div class="col-md-3">
-                        <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size:0.7rem;">Date</label>
-                        <input type="date" name="holiday_date" class="form-control" required>
+                        <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size:0.7rem;">Start Date</label>
+                        <input type="date" name="holiday_start" class="form-control" required>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size:0.7rem;">End Date</label>
+                        <input type="date" name="holiday_end" class="form-control">
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size:0.7rem;">Name</label>
-                        <input type="text" name="holiday_name" class="form-control" placeholder="e.g. Madaraka Day" required>
+                        <input type="text" name="holiday_name" class="form-control" placeholder="e.g. Half-term" required>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size:0.7rem;">Note (optional)</label>
                         <input type="text" name="holiday_desc" class="form-control" placeholder="optional">
                     </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-danger w-100 fw-semibold"><i class="bi bi-plus-lg me-1"></i>Add</button>
+                    <div class="col-12 mt-2">
+                        <button type="submit" class="btn btn-danger fw-semibold"><i class="bi bi-plus-lg me-1"></i>Add Holiday Period</button>
+                        <small class="text-muted ms-2">Leave End Date blank for a single day.</small>
                     </div>
                 </form>
                 {% if holidays %}
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
                         <thead class="table-light" style="font-size:0.72rem;font-weight:700;">
-                            <tr><th>Date</th><th>Holiday</th><th>Note</th><th class="text-end">Remove</th></tr>
+                            <tr><th>Period</th><th>Holiday</th><th>Note</th><th class="text-end">Remove</th></tr>
                         </thead>
                         <tbody>
                             {% for h in holidays %}
                             <tr>
-                                <td class="font-monospace small">{{ h.date|date:"Y-m-d (D)" }}</td>
+                                <td class="font-monospace small">
+                                    {{ h.start_date|date:"Y-m-d (D)" }}{% if h.end_date and h.end_date != h.start_date %} – {{ h.end_date|date:"Y-m-d (D)" }}{% endif %}
+                                </td>
                                 <td class="fw-semibold small">{{ h.name }}</td>
                                 <td class="small text-muted">{{ h.description|default:"—" }}</td>
                                 <td class="text-end">
