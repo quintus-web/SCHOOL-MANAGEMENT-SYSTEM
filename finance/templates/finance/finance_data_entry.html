@@ -159,6 +159,7 @@
                             <th>Channel</th>
                             <th>Note</th>
                             <th class="text-end">Amount (KES)</th>
+                            <th class="text-end" style="width: 60px;">Receipt</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -169,6 +170,11 @@
                             <td><span class="badge bg-light text-dark border">{{ r.get_payment_channel_display }}</span></td>
                             <td class="text-muted">{{ r.description|default:"—" }}</td>
                             <td class="text-end fw-bold text-success font-monospace">{{ r.amount|floatformat:2 }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'generate_receipt_pdf' r.id %}" class="btn btn-sm btn-outline-primary" target="_blank" title="Download Receipt">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </a>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

@@ -613,6 +613,33 @@ def generate_invoice_pdf(request, invoice_id):
 
 
 @login_required
+def generate_receipt_pdf(request, receipt_id):
+    receipt = get_object_or_404(FeeReceipt.objects.select_related('student', 'student__class_stream', 'invoice'), id=receipt_id)
+
+    context = {
+        'receipt': receipt,
+        'today': timezone.now(),
+    }
+
+    try:
+        from weasyprint import HTML
+        from django.template.loader import render_to_string
+        html_string = render_to_string('finance/receipt_printout.html', context)
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"receipt_{receipt.reference_code}_{receipt.student.admission_number}.pdf"
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        HTML(string=html_string).write_pdf(response)
+        return response
+    except (ImportError, OSError):
+        from django.template.loader import render_to_string
+        html_string = render_to_string('finance/receipt_printout.html', context)
+        response = HttpResponse(html_string, content_type='text/html')
+        response['Content-Disposition'] = f'inline; filename="receipt_{receipt.reference_code}_{receipt.student.admission_number}.html"'
+        messages.info(request, "PDF engine unavailable - rendering print-friendly HTML. Use browser Print to save as PDF.")
+        return response
+
+
+@login_required
 def financial_analytics(request):
     from collections import defaultdict
     from django.db.models import Sum, Count, Q, F

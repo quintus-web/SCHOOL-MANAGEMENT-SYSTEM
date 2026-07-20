@@ -36,6 +36,7 @@ urlpatterns = [
     path('treasury/analytics/', views.financial_analytics, name='financial_analytics'),
     path('treasury/invoices/', views.invoice_list, name='invoice_list'),
     path('treasury/invoice/<int:invoice_id>/pdf/', views.generate_invoice_pdf, name='generate_invoice_pdf'),
+    path('treasury/receipt/<int:receipt_id>/pdf/', views.generate_receipt_pdf, name='generate_receipt_pdf'),
     
     # ── FACULTY BROADCASTER ENGINE ──
     path('faculty/class-broadcast/', views.teacher_sms_broadcast, name='teacher_sms_broadcast'),
